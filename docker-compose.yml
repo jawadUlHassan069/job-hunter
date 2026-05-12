@@ -1,0 +1,137 @@
+version: '3.9'
+
+services:
+
+  # ── PostgreSQL database ─────────────────────────────
+  db:
+    image: postgres:15
+    container_name: jobhunter_db
+    environment:
+      POSTGRES_DB: jobhunter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"         # exposed so you can connect with pgAdmin
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (Celery broker) ───────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: jobhunter_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Django backend instance 1 ───────────────────────
+  django1:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jobhunter_django1
+    environment:
+      - INSTANCE_ID=1
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./ml:/ml
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"              # not exposed to host — nginx handles this
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # ── Django backend instance 2 (load balancing) ──────
+  django2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jobhunter_django2
+    environment:
+      - INSTANCE_ID=2
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./ml:/ml
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+
+  # ── Celery worker (background tasks) ────────────────
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jobhunter_celery
+    environment:
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - ./ml:/ml
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config worker --loglevel=info
+
+  # ── Nginx load balancer ──────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: jobhunter_nginx
+    ports:
+      - "80:80"             # your app runs at http://localhost
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - media_data:/media
+    depends_on:
+      - django1
+      - django2
+
+  # ── React frontend ───────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jobhunter_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # keep node_modules inside container
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+  media_data:

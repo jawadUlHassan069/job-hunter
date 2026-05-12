@@ -1,5 +1,57 @@
-venv/
+# ── Python ───────────────────────────────────────────
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environment ───────────────────────────────
+venv/
+env/
+.venv/
+ENV/
+
+# ── Django ────────────────────────────────────────────
+*.sqlite3
+backend/staticfiles/
+backend/media/
+backend/logs/
+
+# ── Environment variables ─────────────────────────────
 .env
-db.sqlite3
+.env.local
+.env.production
+.env.staging
+# .env.example is NOT ignored — teammates need it
+
+# ── ML / Vector DB ────────────────────────────────────
+ml/rag/chroma_store/
+*.pkl
+*.h5
+*.pt
+*.bin
+
+# ── React / Node ──────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# ── Docker ────────────────────────────────────────────
+*.log
+
+# ── OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

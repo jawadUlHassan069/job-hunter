@@ -1,8 +1,13 @@
 import sys
 from pathlib import Path
 
-ML_PATH = Path(__file__).resolve().parent.parent.parent / 'ml'
-sys.path.insert(0, str(ML_PATH))
+VIEWS_FILE  = Path(__file__).resolve()
+BACKEND_DIR = VIEWS_FILE.parent.parent
+PROJECT_DIR = BACKEND_DIR.parent
+ML_PATH     = PROJECT_DIR / 'ml'
+
+if str(ML_PATH) not in sys.path:
+    sys.path.insert(0, str(ML_PATH))
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -17,7 +22,6 @@ class MatchJobsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # check user has a CV
         try:
             cv = request.user.cv
         except Exception:
@@ -26,7 +30,6 @@ class MatchJobsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # check CV was parsed successfully
         if not cv.parsed or 'error' in cv.parsed:
             return Response(
                 {'error': 'CV parsing failed. Please re-upload your CV.'},
@@ -48,7 +51,6 @@ class MatchJobsView(APIView):
                 status=status.HTTP_202_ACCEPTED
             )
 
-        # fetch jobs and preserve ChromaDB order (best match first)
         jobs_qs = Job.objects.filter(id__in=job_ids)
         jobs    = sorted(jobs_qs, key=lambda j: job_ids.index(j.id))
 

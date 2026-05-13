@@ -1,11 +1,16 @@
 import json
-import anthropic
+from google import genai
+from google.genai import types
 from django.conf import settings
+
+
+def get_gemini_client():
+    return genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract raw text from a PDF using PyMuPDF."""
-    import fitz  # PyMuPDF
+    import fitz
     doc  = fitz.open(file_path)
     text = ''
     for page in doc:
@@ -16,10 +21,10 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 def parse_cv_with_llm(raw_text: str) -> dict:
     """
-    Send raw CV text to Claude API.
-    Returns structured JSON with name, skills, experience etc.
+    Send raw CV text to Gemini.
+    Returns structured JSON.
     """
-    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
+    client = get_gemini_client()
 
     prompt = f"""
 You are a CV parser. Extract structured information from the CV text below.
@@ -57,13 +62,12 @@ CV Text:
 {raw_text[:4000]}
 """
 
-    message = client.messages.create(
-        model      = 'claude-sonnet-4-20250514',
-        max_tokens = 1500,
-        messages   = [{'role': 'user', 'content': prompt}]
+    response = client.models.generate_content(
+            model = 'models/gemini-flash-lite-latest',
+        contents = prompt,
     )
 
-    response_text = message.content[0].text.strip()
+    response_text = response.text.strip()
 
     # strip markdown fences if present
     if response_text.startswith('```'):

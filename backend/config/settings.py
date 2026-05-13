@@ -2,6 +2,10 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
 import sys
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -130,7 +134,7 @@ EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ── LLM ────────────────────────────────────────────────
-CLAUDE_API_KEY = config('CLAUDE_API_KEY', default='')
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
 # ── Sentry ─────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')

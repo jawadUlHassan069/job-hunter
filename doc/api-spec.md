@@ -1069,7 +1069,6 @@ POST   /api/auth/2fa/verify/
 
 POST   /api/cv/
 GET    /api/cv/
-
 GET    /api/jobs/
 GET    /api/jobs/?deadline=soon
 GET    /api/jobs/?skill=<keyword>
@@ -1087,3 +1086,4 @@ GET    /api/match/gap/<job_id>/
 ---
 
 *Last updated: May 2026 — Job Hunter BSE 6A Spring 2026*
+w

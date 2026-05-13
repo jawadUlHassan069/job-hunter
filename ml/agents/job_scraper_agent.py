@@ -1,11 +1,10 @@
 import asyncio
 import json
 import os
-import anthropic
 from datetime import date
 from playwright.async_api import async_playwright
+from google import genai
 
-# add job sources here — one entry per site
 JOB_SOURCES = [
     {
         'name':          'rozee',
@@ -15,18 +14,18 @@ JOB_SOURCES = [
 ]
 
 
+def get_gemini_client():
+    return genai.Client(api_key=os.environ.get('GEMINI_API_KEY', ''))
+
+
 async def scrape_job_page(page, url: str) -> str:
-    """Visit a job page and return all visible text."""
     await page.goto(url, wait_until='domcontentloaded', timeout=30000)
     await page.wait_for_timeout(2000)
     return await page.inner_text('body')
 
 
 def extract_job_details_with_llm(page_text: str, url: str) -> dict:
-    """Use Claude to extract structured job data from raw page text."""
-    client = anthropic.Anthropic(
-        api_key=os.environ.get('CLAUDE_API_KEY', '')
-    )
+    client = get_gemini_client()
 
     prompt = f"""
 Extract job details from this job posting.
@@ -49,15 +48,13 @@ Job posting text:
 URL: {url}
 """
 
-    message = client.messages.create(
-        model      = 'claude-sonnet-4-20250514',
-        max_tokens = 800,
-        messages   = [{'role': 'user', 'content': prompt}]
+    response = client.models.generate_content(
+            model = 'models/gemini-flash-lite-latest',
+        contents = prompt,
     )
 
-    text = message.content[0].text.strip()
+    text = response.text.strip()
 
-    # strip markdown fences if present
     if text.startswith('```'):
         lines = text.split('\n')
         text  = '\n'.join(lines[1:-1])
@@ -66,11 +63,6 @@ URL: {url}
 
 
 async def run_scraping_agent(query: str = 'python developer', max_jobs: int = 20) -> list:
-    """
-    Main scraping function.
-    Visits job sites, extracts job details using LLM.
-    Returns list of job dicts.
-    """
     results = []
 
     async with async_playwright() as p:
@@ -106,7 +98,7 @@ async def run_scraping_agent(query: str = 'python developer', max_jobs: int = 20
                         job_data['source'] = source['name']
                         results.append(job_data)
                         print(f"Extracted: {job_data.get('title')} at {job_data.get('company')}")
-                        await asyncio.sleep(2)   # polite delay
+                        await asyncio.sleep(2)
                     except Exception as e:
                         print(f"Failed on {url}: {e}")
                         continue
@@ -121,16 +113,10 @@ async def run_scraping_agent(query: str = 'python developer', max_jobs: int = 20
 
 
 def save_scraped_jobs(jobs: list) -> int:
-    """
-    Save scraped job dicts to PostgreSQL.
-    Triggers ChromaDB embedding for each new job.
-    Returns count of newly saved jobs.
-    """
     import django
     import sys
     from pathlib import Path
 
-    # setup Django so we can use ORM outside of request cycle
     backend_path = Path(__file__).resolve().parent.parent.parent / 'backend'
     sys.path.insert(0, str(backend_path))
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
@@ -138,7 +124,7 @@ def save_scraped_jobs(jobs: list) -> int:
     try:
         django.setup()
     except RuntimeError:
-        pass  # already setup
+        pass
 
     from jobs_service.models import Job
     from matching_service.tasks import embed_job_task
@@ -146,7 +132,6 @@ def save_scraped_jobs(jobs: list) -> int:
     saved_count = 0
 
     for job_data in jobs:
-        # parse deadline string
         deadline     = None
         deadline_str = job_data.get('deadline')
         if deadline_str:
@@ -170,7 +155,6 @@ def save_scraped_jobs(jobs: list) -> int:
         )
 
         if created:
-            # embed new job in background
             try:
                 embed_job_task.delay(job.id)
             except Exception as e:

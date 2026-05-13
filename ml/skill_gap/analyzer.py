@@ -1,24 +1,25 @@
 import json
-import anthropic
+import os
+from google import genai
 from django.conf import settings
+
+
+def get_gemini_client():
+    return genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
 def analyze_skill_gap(cv_parsed: dict, job: dict) -> dict:
     """
-    Compare a candidate's CV against a job's requirements.
-
-    cv_parsed : structured dict from CV parsing
-    job       : dict with title, description, required_skills
-
+    Compare a candidate's CV against a job's requirements using Gemini.
     Returns structured gap report.
     """
-    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
+    client = get_gemini_client()
 
-    cv_skills    = cv_parsed.get('skills',     [])
-    cv_exp       = cv_parsed.get('experience', [])
-    job_skills   = job.get('required_skills',  [])
-    job_title    = job.get('title',            '')
-    job_desc     = job.get('description',      '')
+    cv_skills  = cv_parsed.get('skills',     [])
+    cv_exp     = cv_parsed.get('experience', [])
+    job_skills = job.get('required_skills',  [])
+    job_title  = job.get('title',            '')
+    job_desc   = job.get('description',      '')
 
     prompt = f"""
 You are a career advisor analyzing a candidate's fit for a job.
@@ -48,13 +49,12 @@ Return exactly this JSON:
 }}
 """
 
-    message = client.messages.create(
-        model      = 'claude-sonnet-4-20250514',
-        max_tokens = 1000,
-        messages   = [{'role': 'user', 'content': prompt}]
+    response = client.models.generate_content(
+            model = 'models/gemini-flash-lite-latest',
+        contents = prompt,
     )
 
-    text = message.content[0].text.strip()
+    text = response.text.strip()
 
     if text.startswith('```'):
         lines = text.split('\n')

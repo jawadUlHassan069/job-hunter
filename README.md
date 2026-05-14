@@ -110,5 +110,3 @@ docker-compose up --build
 App will be at: http://localhost
 
 ---
-
-## Branch Rules

@@ -124,6 +124,9 @@ CELERY_BROKER_URL      = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND  = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT  = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # ── Email ──────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'

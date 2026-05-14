@@ -1,6 +1,6 @@
 import json
-import os
-from google import genai
+import time
+import google.genai as genai
 from django.conf import settings
 
 
@@ -9,12 +9,7 @@ def get_gemini_client():
 
 
 def analyze_skill_gap(cv_parsed: dict, job: dict) -> dict:
-    """
-    Compare a candidate's CV against a job's requirements using Gemini.
-    Returns structured gap report.
-    """
-    client = get_gemini_client()
-
+    client     = get_gemini_client()
     cv_skills  = cv_parsed.get('skills',     [])
     cv_exp     = cv_parsed.get('experience', [])
     job_skills = job.get('required_skills',  [])
@@ -49,15 +44,22 @@ Return exactly this JSON:
 }}
 """
 
-    response = client.models.generate_content(
-            model = 'models/gemini-flash-lite-latest',
-        contents = prompt,
-    )
+    # retry up to 3 times on 503
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model    = 'models/gemini-2.0-flash-lite',
+                contents = prompt,
+            )
+            text = response.text.strip()
+            if text.startswith('```'):
+                lines = text.split('\n')
+                text  = '\n'.join(lines[1:-1])
+            return json.loads(text)
 
-    text = response.text.strip()
-
-    if text.startswith('```'):
-        lines = text.split('\n')
-        text  = '\n'.join(lines[1:-1])
-
-    return json.loads(text)
+        except Exception as e:
+            if '503' in str(e) and attempt < 2:
+                print(f"Gemini busy, retrying in 5s... (attempt {attempt + 1})")
+                time.sleep(5)
+                continue
+            raise

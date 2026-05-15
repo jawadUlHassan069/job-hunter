@@ -107,6 +107,6 @@ npm run dev
 docker-compose up --build
 ```
 
-App will be at: http://localhost
+App will be at: http://localhost/3000
 
 ---

@@ -2,7 +2,7 @@
 
 A cloud-based Smart CV and Job Matching Platform built for CSL 220 Cloud Computing.
 
-**Bahria University Karachi Campus — BSE 6A Spring 2026**
+**Bahria University Karachi Campus  BSE 6A Spring 2026**
 
 ## Team
 | Name | Role | Enrollment |

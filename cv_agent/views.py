@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from .prompts import SYSTEM_PROMPT
 
-GROQ_API_KEY = "GROQ_API_KEY"
+GROQ_API_KEY = "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"
 
 
 @api_view(["POST"])
@@ -170,15 +170,27 @@ Final CV:
 
         # =========================
         # CLEAN JSON
-        # =========================ffff
+        # =========================
 
+        raw_json = raw_json.strip()
+
+        raw_json = re.sub(r"```json", "", raw_json)
+        raw_json = re.sub(r"```", "", raw_json)
+
+        try:
+            resume_json = json.loads(raw_json)
+
+        except Exception as e:
+            return Response({
+                "error": "JSON Parse Error",
+                "raw": raw_json,
+                "details": str(e)
+            }, status=500)
 
         # =========================
         # AUTO FIX MISSING FIELDS
         # =========================
 
-  
-            
         resume_json.setdefault("name", "")
         resume_json.setdefault("email", "")
         resume_json.setdefault("phone", "")

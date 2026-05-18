@@ -1,6 +1,6 @@
 import json
+import time
 from google import genai
-from google.genai import types
 from django.conf import settings
 
 
@@ -9,7 +9,6 @@ def get_gemini_client():
 
 
 def extract_text_from_pdf(file_path: str) -> str:
-    """Extract raw text from a PDF using PyMuPDF."""
     import fitz
     doc  = fitz.open(file_path)
     text = ''
@@ -20,10 +19,6 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 
 def parse_cv_with_llm(raw_text: str) -> dict:
-    """
-    Send raw CV text to Gemini.
-    Returns structured JSON.
-    """
     client = get_gemini_client()
 
     prompt = f"""
@@ -62,16 +57,26 @@ CV Text:
 {raw_text[:4000]}
 """
 
-    response = client.models.generate_content(
-            model = 'models/gemini-flash-lite-latest',
-        contents = prompt,
-    )
+    # retry with backoff on quota/503 errors
+    for attempt in range(5):
+        try:
+            response      = client.models.generate_content(
+                model    = 'models/gemini-2.0-flash-lite',
+                contents = prompt,
+            )
+            response_text = response.text.strip()
+            if response_text.startswith('```'):
+                lines         = response_text.split('\n')
+                response_text = '\n'.join(lines[1:-1])
+            return json.loads(response_text)
 
-    response_text = response.text.strip()
+        except Exception as e:
+            error_str = str(e)
+            if '429' in error_str or '503' in error_str or 'quota' in error_str.lower():
+                wait = (attempt + 1) * 10   # 10s, 20s, 30s, 40s, 50s
+                print(f"Gemini quota hit. Waiting {wait}s before retry {attempt + 1}/5...")
+                time.sleep(wait)
+                continue
+            raise
 
-    # strip markdown fences if present
-    if response_text.startswith('```'):
-        lines         = response_text.split('\n')
-        response_text = '\n'.join(lines[1:-1])
-
-    return json.loads(response_text)
+    raise Exception("Gemini quota exhausted after 5 retries. Try again in a few minutes.")

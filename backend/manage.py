@@ -1,8 +1,18 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
 
+# BASE DIRECTORY = backend/
+BASE_DIR = Path(__file__).resolve().parent
+
+# PROJECT ROOT = job-hunter/
+PROJECT_ROOT = BASE_DIR.parent
+
+# ADD PROJECT ROOT TO PYTHON PATH
+sys.path.insert(0, str(PROJECT_ROOT))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 def main():
     """Run administrative tasks."""

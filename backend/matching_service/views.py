@@ -37,24 +37,36 @@ class MatchJobsView(APIView):
             )
 
         try:
-            from rag.embedder import find_matching_jobs
-            job_ids = find_matching_jobs(cv.id, top_k=10)
+            from rag.embedder import get_similarity_scores
+            scores = get_similarity_scores(cv.id, top_k=10)
         except Exception as e:
             return Response(
                 {'error': f'Matching engine error: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        if not job_ids:
+        if not scores:
             return Response(
                 {'error': 'CV not yet indexed. Wait a moment and try again.'},
                 status=status.HTTP_202_ACCEPTED
             )
 
-        jobs_qs = Job.objects.filter(id__in=job_ids)
-        jobs    = sorted(jobs_qs, key=lambda j: job_ids.index(j.id))
+        job_ids  = [s['job_id'] for s in scores]
+        jobs_qs  = Job.objects.filter(id__in=job_ids)
+        jobs_map = {job.id: job for job in jobs_qs}
 
-        return Response(JobSerializer(jobs, many=True).data)
+        results = []
+        for s in scores:
+            job = jobs_map.get(s['job_id'])
+            if job:
+                job_data = JobSerializer(job).data
+                # convert 0-1 float → 0-100 integer for frontend
+                raw_sim  = s.get('similarity', 0)
+                job_data['match_score'] = round(raw_sim * 100)
+                job_data['similarity_score'] = raw_sim
+                results.append(job_data)
+
+        return Response(results)
 
 
 class SkillGapView(APIView):
@@ -84,12 +96,40 @@ class SkillGapView(APIView):
         }
 
         try:
-            from skill_gap.analyzer import analyze_skill_gap
-            gap_report = analyze_skill_gap(cv.parsed, job_dict)
+            from matching_service.models import SkillGapCache
+
+            cached = SkillGapCache.objects.filter(
+                user=request.user,
+                job=job
+            ).first()
+
+            if cached:
+                gap_report = cached.result
+            else:
+                from skill_gap.analyzer import analyze_skill_gap
+                gap_report = analyze_skill_gap(cv.parsed, job_dict)
+
+                SkillGapCache.objects.create(
+                    user=request.user,
+                    job=job,
+                    result=gap_report
+                )
+
         except Exception as e:
             return Response(
                 {'error': f'Skill gap analysis failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        return Response(gap_report)
+        # Gemini already returns exactly the keys the frontend expects.
+        # We normalize defensively in case any field is missing.
+        normalized = {
+            'match_score':     gap_report.get('match_score')     or 0,
+            'strong_matches':  gap_report.get('strong_matches')  or [],
+            'partial_matches': gap_report.get('partial_matches') or [],
+            'missing_skills':  gap_report.get('missing_skills')  or [],
+            'recommendations': gap_report.get('recommendations') or [],
+            'summary':         gap_report.get('summary')         or '',
+        }
+
+        return Response(normalized)

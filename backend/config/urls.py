@@ -9,5 +9,5 @@ urlpatterns = [
     path('api/cv/',      include('cv_service.urls')),
     path('api/jobs/',    include('jobs_service.urls')),
     path('api/match/',   include('matching_service.urls')),
-    path('api/alerts/',  include('notifications.urls')),
+    path('api/chat/',    include('cv_agent.urls')),  
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

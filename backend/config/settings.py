@@ -7,10 +7,16 @@ import os
 
 load_dotenv()
 
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ml/ folder so Django apps can import from it
 sys.path.insert(0, str(BASE_DIR.parent / 'ml'))
+
+
+
+
 
 # ── Core ──────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-changeme-in-production')
@@ -39,7 +45,7 @@ INSTALLED_APPS = [
     'cv_service',
     'jobs_service',
     'matching_service',
-    'notifications',
+    'cv_agent',
 ]
 
 MIDDLEWARE = [

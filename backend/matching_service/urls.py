@@ -1,7 +1,8 @@
 from django.urls import path
-from . import views
+from .views import MatchJobsView, SkillGapView
 
 urlpatterns = [
-    path('',                   views.MatchJobsView.as_view()),
-    path('gap/<int:job_id>/',  views.SkillGapView.as_view()),
+    path('',                   MatchJobsView.as_view()),  # GET /api/match/
+    path('gap/<int:job_id>/',  SkillGapView.as_view()),   # GET /api/match/gap/1/
 ]
+

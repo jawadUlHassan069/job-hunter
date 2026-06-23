@@ -1,9 +1,8 @@
+// src/components/Landing/TeamSection.jsx
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TEAM, ACCENT } from "@/data.js";
-
-gsap.registerPlugin(ScrollTrigger);
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,125 +12,82 @@ export default function TeamSection() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(".team-header",
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1, y: 0, duration: 0.8, ease: "power3.out",
-          scrollTrigger: { trigger: sectionRef.current, start: "top 82%", once: true },
-        }
+        { opacity:0, y:20 },
+        { opacity:1, y:0, duration:0.6, ease:"power3.out", clearProps:"opacity,transform",
+          scrollTrigger:{ trigger:sectionRef.current, start:"top 88%", once:true } }
       );
       gsap.fromTo(".team-card",
-        { opacity: 0, y: 35 },
-        {
-          opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "power3.out",
-          scrollTrigger: { trigger: ".team-grid", start: "top 80%", once: true },
-        }
+        { opacity:0, y:20 },
+        { opacity:1, y:0, duration:0.5, stagger:0.07, ease:"power3.out", clearProps:"opacity,transform",
+          scrollTrigger:{ trigger:".team-grid", start:"top 88%", once:true } }
       );
     }, sectionRef);
     return () => ctx.revert();
   }, []);
 
   return (
-    <section
-      id="team"
-      ref={sectionRef}
-      className="py-20 sm:py-28 px-4 sm:px-6"
-      style={{ borderTop: "1px solid var(--border)" }}
-    >
-      <div className="max-w-7xl mx-auto">
+    <section id="team" ref={sectionRef}
+      style={{ padding:"56px 32px 60px", borderTop:"1px solid var(--border,rgba(255,255,255,0.08))", background:"var(--bg,#060816)" }}>
+      <div style={{ maxWidth:1100, margin:"0 auto" }}>
 
         {/* Header */}
-        <div className="team-header opacity-0 mb-10 sm:mb-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="team-header" style={{ marginBottom:36, display:"flex",
+          alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
           <div>
-            <div
-              className="text-xs font-mono-ui mb-3 tracking-[0.22em] uppercase"
-              style={{ color: ACCENT }}
-            >
-              ◈ The Team
-            </div>
-            <h2
-              className="text-4xl sm:text-5xl font-black font-heading leading-tight"
-              style={{ color: "var(--text)" }}
-            >
+            <div style={{ fontSize:10, fontFamily:"'JetBrains Mono',monospace", letterSpacing:"0.2em",
+              textTransform:"uppercase", color:ACCENT, marginBottom:10 }}>◈ The Team</div>
+            <h2 style={{ margin:0, fontFamily:"'Syne',sans-serif", fontWeight:900,
+              fontSize:"clamp(1.6rem,3vw,2.4rem)", lineHeight:1.1, color:"var(--text,#f3f6ff)" }}>
               BSE 6A · Spring 2026
             </h2>
           </div>
-          <p
-            className="text-sm max-w-xs leading-relaxed font-mono-ui"
-            style={{ color: "var(--text-muted)" }}
-          >
-            CSL 220 Cloud Computing
-            <br />
-            Bahria University Karachi Campus
+          <p style={{ margin:0, fontSize:12, lineHeight:1.7, color:"var(--text-muted,rgba(243,246,255,0.50))",
+            fontFamily:"'DM Mono',monospace", maxWidth:220 }}>
+            CSL 220 Cloud Computing<br />Bahria University Karachi Campus
           </p>
         </div>
 
         {/* Cards */}
-        <div className="team-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {TEAM.map((m) => (
-            <div
-              key={m.enroll}
-              className="team-card opacity-0 rounded-2xl sm:rounded-3xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1"
-              style={{
-                background:   "var(--card-bg)",
-                border:       "1px solid var(--card-border)",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = `${m.color}35`;
-                e.currentTarget.style.boxShadow   = `0 8px 30px ${m.color}12`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = "var(--card-border)";
-                e.currentTarget.style.boxShadow   = "none";
-              }}
+        <div className="team-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
+          {TEAM.map(m => (
+            <div key={m.enroll} className="team-card" style={{
+              borderRadius:12, padding:"18px",
+              background:"var(--card-bg,#0d0f1a)",
+              border:"1px solid rgba(255,255,255,0.08)",
+              transition:"border-color 0.25s,transform 0.25s,box-shadow 0.25s",
+            }}
+              onMouseEnter={e=>{ e.currentTarget.style.borderColor=`${m.color}35`; e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow=`0 8px 24px ${m.color}12`; }}
+              onMouseLeave={e=>{ e.currentTarget.style.borderColor="rgba(255,255,255,0.08)"; e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}
             >
-              {/* Avatar + lead badge */}
-              <div className="flex items-start justify-between mb-5">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-xs font-heading flex-shrink-0"
-                  style={{ background: `${m.color}20`, color: m.color }}
-                >
+              {/* Avatar + lead */}
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:14 }}>
+                <div style={{ width:38, height:38, borderRadius:9, background:`${m.color}22`, color:m.color,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontWeight:800, fontSize:11, fontFamily:"'Syne',sans-serif" }}>
                   {m.initials}
                 </div>
                 {m.lead && (
-                  <span
-                    className="text-[10px] font-mono-ui px-2 py-1 rounded-full"
-                    style={{
-                      background: `${ACCENT}18`,
-                      color:      ACCENT,
-                      border:     `1px solid ${ACCENT}28`,
-                    }}
-                  >
+                  <span style={{ fontSize:9, fontFamily:"'DM Mono',monospace", padding:"2px 8px",
+                    borderRadius:100, background:`${ACCENT}18`, color:ACCENT, border:`1px solid ${ACCENT}28` }}>
                     Lead
                   </span>
                 )}
               </div>
-
               {/* Name */}
-              <div
-                className="font-bold text-base font-heading mb-1 leading-tight"
-                style={{ color: "var(--text)" }}
-              >
-                {m.name}
-              </div>
-
+              <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13,
+                color:"var(--text,#f3f6ff)", marginBottom:3, lineHeight:1.3 }}>{m.name}</div>
               {/* Role */}
-              <div
-                className="text-xs font-mono-ui mb-4"
-                style={{ color: `${m.color}AA` }}
-              >
-                {m.role}
-              </div>
-
-              {/* Enrollment */}
-              <div
-                className="text-[10px] font-mono-ui"
-                style={{ color: "var(--text-faint)" }}
-              >
-                {m.enroll}
-              </div>
+              <div style={{ fontSize:11, fontFamily:"'DM Mono',monospace", color:`${m.color}CC`, marginBottom:10 }}>{m.role}</div>
+              {/* Enroll */}
+              <div style={{ fontSize:10, fontFamily:"'DM Mono',monospace", color:"var(--text-faint,rgba(243,246,255,0.30))" }}>{m.enroll}</div>
             </div>
           ))}
         </div>
+
+        <style>{`
+          @media(max-width:880px){ .team-grid{ grid-template-columns:repeat(2,1fr)!important; } }
+          @media(max-width:480px){ .team-grid{ grid-template-columns:1fr!important; } }
+        `}</style>
       </div>
     </section>
   );

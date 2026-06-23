@@ -1,12 +1,21 @@
+// src/components/Landing/Navbar.jsx
 import { useState, useEffect } from "react";
 import { NAV_LINKS, ACCENT } from "@/data.js";
-import { useNavigate } from 'react-router-dom'
-
-
+import { useNavigate } from "react-router-dom";
 
 export default function Navbar({ theme, setTheme, onAnalyze, isAnalyzePage, onHome }) {
   const [open,     setOpen]     = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+  const isLight  = theme === "light";
+
+  // Theme-aware color helpers — navbar always overlays sections so we need
+  // explicit colors for both modes rather than relying on CSS vars
+  const navTextColor    = isLight ? "rgba(11,17,32,0.70)"  : "rgba(243,246,255,0.65)";
+  const navTextHover    = isLight ? "#0b1120"               : "#f3f6ff";
+  const navBorderColor  = isLight ? "rgba(11,17,32,0.18)"  : "rgba(255,255,255,0.15)";
+  const navBtnBg        = isLight ? "rgba(11,17,32,0.06)"  : "rgba(255,255,255,0.05)";
+  const navBtnBgHover   = isLight ? "rgba(11,17,32,0.10)"  : "rgba(255,255,255,0.10)";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -20,208 +29,194 @@ export default function Navbar({ theme, setTheme, onAnalyze, isAnalyzePage, onHo
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const handleNavClick = (href) => {
+  const scrollTo = (href) => {
     setOpen(false);
-    // If we're on the analyze page, go back home first then scroll
     if (isAnalyzePage) { onHome?.(); return; }
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const isLight = theme === "light";
-
-  const navigate = useNavigate()
-
   return (
-    <nav
-      style={{
-        position:            "fixed",
-        top:                 0,
-        left:                0,
-        right:               0,
-        zIndex:              50,
-        transition:          "all 0.4s ease",
-        background:          scrolled ? "var(--nav)" : "transparent",
-        backdropFilter:      scrolled ? "blur(20px)" : "none",
-        WebkitBackdropFilter:scrolled ? "blur(20px)" : "none",
-        borderBottom:        scrolled
-          ? "1px solid var(--nav-border)"
-          : "1px solid transparent",
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <nav style={{
+      position:             "fixed",
+      top: 0, left: 0, right: 0,
+      zIndex:               50,
+      height:               60,
+      transition:           "background 0.3s ease, border-color 0.3s ease",
+      background:           scrolled ? "var(--nav)" : "transparent",
+      backdropFilter:       scrolled ? "blur(24px) saturate(1.4)" : "none",
+      WebkitBackdropFilter: scrolled ? "blur(24px) saturate(1.4)" : "none",
+      borderBottom:         scrolled ? "1px solid var(--nav-border)" : "1px solid transparent",
+    }}>
+      <div style={{
+        maxWidth: 1200, margin: "0 auto",
+        padding: "0 24px", height: "100%",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
 
-        {/* ── Logo ─────────────────────────────────────────── */}
+        {/* ── Logo ── */}
         <button
-          onClick={() => { setOpen(false); onHome ? onHome() : window.scrollTo({ top:0, behavior:"smooth" }); }}
-          className="flex items-center gap-2 bg-transparent border-none cursor-pointer"
+          onClick={() => { setOpen(false); onHome ? onHome() : window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}
         >
-          <span
-            className="text-xl font-extrabold tracking-tight font-heading"
-            style={{ color: ACCENT }}
-          >JOB</span>
-          <span
-            className="text-xl font-extrabold tracking-tight font-heading"
-            style={{ color: "var(--text)" }}
-          >HUNTER</span>
-          <span
-            className="ml-2 hidden sm:inline text-[10px] font-mono-ui px-2 py-1 rounded-full"
-            style={{
-              color:      "var(--text-muted)",
-              border:     "1px solid var(--border)",
-              background: "var(--surface)",
-            }}
-          >BUKC · BSE-6A</span>
+          <span style={{ fontSize: 18, fontWeight: 900, color: ACCENT, letterSpacing: "-0.5px", fontFamily: "'Syne', sans-serif" }}>JOB</span>
+          <span style={{ fontSize: 18, fontWeight: 900, color: "var(--text)", letterSpacing: "-0.5px", fontFamily: "'Syne', sans-serif" }}>HUNTER</span>
         </button>
 
-        {/* ── Desktop links ─────────────────────────────────── */}
-        <div className="hidden md:flex items-center gap-2">
-          {/* Nav links (hidden on analyze page) */}
+        {/* ── Desktop nav links ── */}
+        <div className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {!isAnalyzePage && NAV_LINKS.map(({ label, href }) => (
-            <button
-              key={label}
-              onClick={() => handleNavClick(href)}
-              className="text-sm font-medium transition-all duration-200 bg-transparent border-none cursor-pointer px-3 py-2 rounded-full"
-              style={{ color: "var(--text-soft)" }}
-              onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
-              onMouseLeave={e => e.currentTarget.style.color = "var(--text-soft)"}
+            <button key={label} onClick={() => scrollTo(href)} style={{
+              background: "none", border: "none", cursor: "pointer",
+              padding: "6px 14px", borderRadius: 8,
+              fontSize: 13, fontWeight: 500,
+              color: navTextColor,
+              transition: "color 0.2s",
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = navTextHover}
+              onMouseLeave={e => e.currentTarget.style.color = navTextColor}
             >{label}</button>
           ))}
 
-          {/* Analyze CV button */}
-          {!isAnalyzePage ? (
-            <button
-              onClick={onAnalyze}
-              className="text-sm px-4 py-2 rounded-full font-medium transition-all duration-200"
-              style={{
-                color:      ACCENT,
-                border:     `1px solid ${ACCENT}35`,
-                background: `${ACCENT}10`,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${ACCENT}20`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = `${ACCENT}10`; }}
-            >
-              Analyze CV ↗
-            </button>
-          ) : (
-            <button
-              onClick={onHome}
-              className="text-sm px-4 py-2 rounded-full font-medium transition-all duration-200"
-              style={{
-                color:      "var(--text-soft)",
-                border:     "1px solid var(--border)",
-                background: "var(--surface)",
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
-              onMouseLeave={e => e.currentTarget.style.color = "var(--text-soft)"}
-            >
-              ← Landing Page
-            </button>
-          )}
-
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(isLight ? "dark" : "light")}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-base transition-all duration-300 hover:scale-110"
-            style={{
-              background: "var(--surface)",
-              border:     "1px solid var(--border)",
+          {isAnalyzePage && (
+            <button onClick={onHome} style={{
+              background: "none",
+              border: `1px solid ${navBorderColor}`,
+              cursor: "pointer",
+              padding: "6px 14px", borderRadius: 8,
+              fontSize: 13, color: navTextColor,
+              transition: "all 0.2s", fontFamily: "'DM Mono', monospace",
             }}
-            aria-label="Toggle theme"
-          >
-            {isLight ? "🌙" : "☀️"}
-          </button>
-
-        {/* Primary CTA */}
-{/* Primary CTA */}
-<button
-  onClick={() => navigate("/login")}
-  className="px-5 py-2.5 text-sm font-medium rounded-full border border-white/20 hover:bg-white/10 transition"
-  style={{ color: "var(--text)" }}
->
-  Log in
-</button>
-
-<button
-  onClick={() => navigate("/register")}
-  className="px-6 py-2.5 text-sm font-medium rounded-full text-white transition-all hover:scale-105"
-  style={{
-    background: "linear-gradient(135deg, var(--accent), #34d399)",
-  }}
->
-  Get Started Free
-</button>
+              onMouseEnter={e => e.currentTarget.style.color = navTextHover}
+              onMouseLeave={e => e.currentTarget.style.color = navTextColor}
+            >← Back</button>
+          )}
         </div>
 
-        {/* ── Mobile hamburger ──────────────────────────────── */}
+        {/* ── Right: theme toggle + auth ── */}
+        <div className="hidden md:flex" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+
+          {/* Theme toggle */}
+          <button onClick={() => setTheme(isLight ? "dark" : "light")} style={{
+            width: 34, height: 34, borderRadius: "50%",
+            background: navBtnBg,
+            border: `1px solid ${navBorderColor}`,
+            cursor: "pointer", fontSize: 14,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "background 0.2s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = navBtnBgHover}
+            onMouseLeave={e => e.currentTarget.style.background = navBtnBg}
+            aria-label="Toggle theme"
+          >{isLight ? "🌙" : "☀️"}</button>
+
+          {/* Log in */}
+          <button onClick={() => navigate("/login")} style={{
+            background: "none",
+            border: `1px solid ${navBorderColor}`,
+            cursor: "pointer",
+            padding: "7px 18px", borderRadius: 8,
+            fontSize: 13, fontWeight: 500,
+            color: navTextColor,
+            transition: "all 0.2s",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = navTextHover;
+              e.currentTarget.style.borderColor = isLight ? "rgba(11,17,32,0.35)" : "rgba(255,255,255,0.30)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = navTextColor;
+              e.currentTarget.style.borderColor = navBorderColor;
+            }}
+          >Log in</button>
+
+          {/* Get Started */}
+          <button onClick={() => navigate("/register")} style={{
+            background: ACCENT,
+            border: "none",
+            cursor: "pointer",
+            padding: "7px 18px", borderRadius: 8,
+            fontSize: 13, fontWeight: 600,
+            color: "#fff",
+            transition: "opacity 0.2s, transform 0.2s",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none"; }}
+          >Get Started</button>
+        </div>
+
+        {/* ── Mobile hamburger ── */}
         <button
-          className="md:hidden p-2 bg-transparent border-none cursor-pointer"
+          className="md:hidden"
           onClick={() => setOpen(!open)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--text)" }}
           aria-label={open ? "Close menu" : "Open menu"}
-          style={{ color: "var(--text)" }}
         >
-          <div className="flex flex-col gap-1.5 w-6">
-            {[0,1,2].map((i) => (
-              <span key={i}
-                className="block h-[2px] bg-current transition-all duration-300 rounded-full"
-                style={{
-                  transform:
-                    i===0 && open ? "translateY(7px) rotate(45deg)"   :
-                    i===2 && open ? "translateY(-7px) rotate(-45deg)" : "none",
-                  opacity: i===1 && open ? 0 : 1,
-                }}
-              />
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, width: 22 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                display: "block", height: 2, background: "currentColor", borderRadius: 2,
+                transition: "all 0.25s ease",
+                transform:
+                  i === 0 && open ? "translateY(7px) rotate(45deg)" :
+                  i === 2 && open ? "translateY(-7px) rotate(-45deg)" : "none",
+                opacity: i === 1 && open ? 0 : 1,
+              }} />
             ))}
           </div>
         </button>
       </div>
 
-      {/* ── Mobile drawer ────────────────────────────────────── */}
-      <div
-        className="md:hidden overflow-hidden transition-all duration-300"
-        style={{ maxHeight: open ? "400px" : "0px" }}
-      >
-        <div
-          className="mx-4 mb-4 p-5 rounded-3xl space-y-3"
-          style={{
-            background:     "var(--surface)",
-            backdropFilter: "blur(20px)",
-            border:         "1px solid var(--border)",
-          }}
-        >
+      {/* ── Mobile drawer ── */}
+      <div style={{ overflow: "hidden", transition: "max-height 0.3s ease", maxHeight: open ? "360px" : "0" }}
+        className="md:hidden">
+        <div style={{
+          margin: "0 16px 16px", padding: "20px", borderRadius: 16,
+          background: isLight ? "rgba(255,255,255,0.96)" : "rgba(13,15,26,0.96)",
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${navBorderColor}`,
+          display: "flex", flexDirection: "column", gap: 8,
+        }}>
           {!isAnalyzePage && NAV_LINKS.map(({ label, href }) => (
-            <button
-              key={label}
-              onClick={() => handleNavClick(href)}
-              className="block w-full text-left text-sm transition-colors bg-transparent border-none cursor-pointer py-1"
-              style={{ color: "var(--text-soft)" }}
-            >{label}</button>
+            <button key={label} onClick={() => scrollTo(href)} style={{
+              background: "none", border: "none", cursor: "pointer",
+              textAlign: "left", padding: "8px 4px",
+              fontSize: 14, color: navTextColor,
+              fontFamily: "'DM Sans', sans-serif",
+            }}>{label}</button>
           ))}
-
-          {/* Analyze CV link in mobile */}
-          <button
-            onClick={() => { setOpen(false); isAnalyzePage ? onHome() : onAnalyze(); }}
-            className="block w-full text-left text-sm py-1 bg-transparent border-none cursor-pointer"
-            style={{ color: ACCENT }}
-          >
-            {isAnalyzePage ? "← Landing Page" : "Analyze CV ↗"}
-          </button>
-
-          <div className="flex items-center gap-3 pt-2 border-t"
-            style={{ borderColor: "var(--border)" }}>
-            <button
-              onClick={() => setTheme(isLight ? "dark" : "light")}
-              className="w-11 h-11 rounded-full flex items-center justify-center text-base"
-              style={{ background:"var(--surface)", border:"1px solid var(--border)" }}
-            >
-              {isLight ? "🌙" : "☀️"}
-            </button>
-            <button
-              onClick={() => { setOpen(false); onAnalyze(); }}
-              className="flex-1 text-sm px-4 py-3 rounded-full text-white font-semibold"
-              style={{ background:`linear-gradient(135deg, ${ACCENT}, #34d399)` }}
-            >
-              {isAnalyzePage ? "New Analysis" : "Get Started"}
-            </button>
+          {isAnalyzePage && (
+            <button onClick={() => { setOpen(false); onHome?.(); }} style={{
+              background: "none", border: "none", cursor: "pointer",
+              textAlign: "left", padding: "8px 4px",
+              fontSize: 14, color: ACCENT,
+              fontFamily: "'DM Mono', monospace",
+            }}>← Back to Home</button>
+          )}
+          <div style={{ height: 1, background: navBorderColor, margin: "4px 0" }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => { setOpen(false); navigate("/login"); }} style={{
+              flex: 1, padding: "10px", borderRadius: 8,
+              background: "none", border: `1px solid ${navBorderColor}`,
+              color: navTextColor, fontSize: 13, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+            }}>Log in</button>
+            <button onClick={() => { setOpen(false); navigate("/register"); }} style={{
+              flex: 1, padding: "10px", borderRadius: 8,
+              background: ACCENT, border: "none",
+              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+            }}>Get Started</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+            <span style={{ fontSize: 12, color: navTextColor, fontFamily: "'DM Mono', monospace" }}>Toggle theme</span>
+            <button onClick={() => setTheme(isLight ? "dark" : "light")} style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: navBtnBg, border: `1px solid ${navBorderColor}`,
+              cursor: "pointer", fontSize: 14,
+            }}>{isLight ? "🌙" : "☀️"}</button>
           </div>
         </div>
       </div>

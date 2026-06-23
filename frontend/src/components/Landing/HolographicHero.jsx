@@ -120,11 +120,11 @@ const MEMBERS = [
 const HOL_CSS = `
   @keyframes hol-float       { 0%,100%{transform:translateY(0) rotateX(4deg) rotateY(-6deg)} 50%{transform:translateY(-18px) rotateX(6deg) rotateY(-4deg)} }
   @keyframes hol-scanLine    { 0%{top:-4px;opacity:0} 5%{opacity:1} 90%{opacity:1} 100%{top:100%;opacity:0} }
-  @keyframes hol-orbitA      { from{transform:rotate(0deg)   translateX(190px) rotate(0deg)}   to{transform:rotate(360deg)  translateX(190px)  rotate(-360deg)} }
-  @keyframes hol-orbitB      { from{transform:rotate(120deg) translateX(155px) rotate(-120deg)} to{transform:rotate(480deg)  translateX(155px)  rotate(-480deg)} }
-  @keyframes hol-orbitC      { from{transform:rotate(240deg) translateX(175px) rotate(-240deg)} to{transform:rotate(600deg)  translateX(175px)  rotate(-600deg)} }
-  @keyframes hol-orbitD      { from{transform:rotate(60deg)  translateX(200px) rotate(-60deg)}  to{transform:rotate(420deg)  translateX(200px)  rotate(-420deg)} }
-  @keyframes hol-orbitE      { from{transform:rotate(310deg) translateX(160px) rotate(-310deg)} to{transform:rotate(670deg)  translateX(160px)  rotate(-670deg)} }
+  @keyframes hol-orbitA      { from{transform:rotate(0deg)   translateX(155px) rotate(0deg)}   to{transform:rotate(360deg)  translateX(155px)  rotate(-360deg)} }
+  @keyframes hol-orbitB      { from{transform:rotate(120deg) translateX(130px) rotate(-120deg)} to{transform:rotate(480deg)  translateX(130px)  rotate(-480deg)} }
+  @keyframes hol-orbitC      { from{transform:rotate(240deg) translateX(145px) rotate(-240deg)} to{transform:rotate(600deg)  translateX(145px)  rotate(-600deg)} }
+  @keyframes hol-orbitD      { from{transform:rotate(60deg)  translateX(160px) rotate(-60deg)}  to{transform:rotate(420deg)  translateX(160px)  rotate(-420deg)} }
+  @keyframes hol-orbitE      { from{transform:rotate(310deg) translateX(135px) rotate(-310deg)} to{transform:rotate(670deg)  translateX(135px)  rotate(-670deg)} }
   @keyframes hol-pulse       { 0%,100%{box-shadow:0 0 0 0 rgba(29,200,120,0.55)} 50%{box-shadow:0 0 0 8px rgba(29,200,120,0)} }
   @keyframes hol-matchGlow   { 0%,100%{opacity:0.65} 50%{opacity:1} }
   @keyframes hol-ringPulse   { 0%{transform:translate(-50%,-50%) scale(1);opacity:.28} 50%{transform:translate(-50%,-50%) scale(1.06);opacity:.12} 100%{transform:translate(-50%,-50%) scale(1);opacity:.28} }
@@ -137,12 +137,12 @@ const HOL_CSS = `
   @keyframes hol-flipIn      { 0%{opacity:0;transform:perspective(900px) rotateX(4deg) rotateY(90deg) scale(0.88)} 100%{opacity:1;transform:perspective(900px) rotateX(4deg) rotateY(-6deg) scale(1)} }
   @keyframes hol-particleDrift { 0%{transform:translateY(0) translateX(0);opacity:.7} 100%{transform:translateY(-60px) translateX(18px);opacity:0} }
 
-  .hol-wrap         { position:relative;width:520px;height:520px;overflow:hidden;border-radius:16px;display:flex;align-items:center;justify-content:center; }
+  .hol-wrap         { position:relative;width:460px;height:460px;overflow:hidden;border-radius:16px;display:flex;align-items:center;justify-content:center;max-width:100%; }
   .hol-bg-grid      { position:absolute;inset:0;background-image:linear-gradient(rgba(29,200,120,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(29,200,120,0.06) 1px,transparent 1px);background-size:40px 40px; }
-  .hol-bg-glow-g    { position:absolute;left:55%;top:50%;width:380px;height:380px;border-radius:50%;transform:translate(-50%,-50%);transition:background 0.9s ease; }
-  .hol-bg-glow-b    { position:absolute;left:30%;top:60%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(55,138,221,0.10) 0%,transparent 70%);transform:translate(-50%,-50%); }
+  .hol-bg-glow-g    { position:absolute;left:55%;top:50%;width:340px;height:340px;border-radius:50%;transform:translate(-50%,-50%);transition:background 0.9s ease; }
+  .hol-bg-glow-b    { position:absolute;left:30%;top:60%;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(55,138,221,0.10) 0%,transparent 70%);transform:translate(-50%,-50%); }
 
-  .hol-scene        { position:absolute;left:52%;top:50%;transform:translate(-50%,-50%);width:260px;height:340px;perspective:900px; }
+  .hol-scene        { position:absolute;left:52%;top:50%;transform:translate(-50%,-50%);width:220px;height:290px;perspective:900px; }
   .hol-cv-card      { width:100%;height:100%;position:relative; }
   .hol-float        { animation:hol-float 6s ease-in-out infinite; }
   .hol-flip-out     { animation:hol-flipOut 0.38s ease-in  both!important; }
@@ -175,8 +175,8 @@ const HOL_CSS = `
   .hol-orbiters     { position:absolute;left:52%;top:50%;width:0;height:0;transform:translate(-50%,-50%); }
   .hol-orbit-chip   { position:absolute;animation-timing-function:linear;animation-iteration-count:infinite; }
   .hol-chip-inner   { display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;white-space:nowrap;animation:hol-chipIn 0.6s ease both;background:rgba(10,20,38,0.90); }
-  .hol-match-ring   { position:absolute;left:52%;top:50%;transform:translate(-50%,-50%);width:430px;height:430px;border-radius:50%;border:1px dashed;animation:hol-ringPulse 4s ease-in-out infinite;pointer-events:none;transition:border-color 0.9s ease; }
-  .hol-match-ring2  { width:370px;height:370px;animation-duration:5s;animation-delay:1s; }
+  .hol-match-ring   { position:absolute;left:52%;top:50%;transform:translate(-50%,-50%);width:360px;height:360px;border-radius:50%;border:1px dashed;animation:hol-ringPulse 4s ease-in-out infinite;pointer-events:none;transition:border-color 0.9s ease; }
+  .hol-match-ring2  { width:310px;height:310px;animation-duration:5s;animation-delay:1s; }
   .hol-left-panel   { position:absolute;left:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px; }
   .hol-match-badge  { display:flex;flex-direction:column;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(10,20,38,0.88);backdrop-filter:blur(8px); }
   .hol-match-pct    { font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1;animation:hol-matchGlow 2.5s ease-in-out infinite;transition:color 0.5s ease; }

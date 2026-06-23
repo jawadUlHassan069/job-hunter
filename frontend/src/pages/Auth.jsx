@@ -1,10 +1,13 @@
-// src/pages/Auth.jsx  — fully self-contained, no child component dependencies
+// src/pages/Auth.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const BASE = 'http://localhost:8000'
+const BASE   = 'http://localhost:8000'
 const ACCENT = '#1d9e75'
 
+function isLoggedIn() {
+  try { return !!localStorage.getItem('access_token'); } catch { return false; }
+}
 function extractTokens(data) {
   return {
     access:  data?.tokens?.access  || data?.access  || data?.token  || null,
@@ -12,80 +15,54 @@ function extractTokens(data) {
   }
 }
 
-/* ── Shared input style ── */
-const inputStyle = {
-  width: '100%', padding: '12px 16px',
-  border: '1.5px solid rgba(0,0,0,0.12)', borderRadius: 12,
-  fontSize: 14, fontFamily: 'inherit', outline: 'none',
-  background: '#fafafa', color: '#0a0a0a',
-  transition: 'border-color .2s',
-  boxSizing: 'border-box',
-}
-
 const labelStyle = {
-  display: 'block', fontSize: 12, fontWeight: 500,
-  marginBottom: 6, color: 'rgba(0,0,0,0.6)',
-  fontFamily: "'DM Mono', monospace", letterSpacing: '0.05em',
+  display: 'block', fontSize: 11, fontWeight: 500,
+  marginBottom: 5, color: 'rgba(0,0,0,0.50)',
+  fontFamily: "'DM Mono', monospace", letterSpacing: '0.04em',
 }
 
-const btnStyle = {
-  width: '100%', padding: '13px 0',
-  background: ACCENT, color: '#fff',
-  border: 'none', borderRadius: 12,
-  fontSize: 14, fontWeight: 700,
-  cursor: 'pointer', transition: 'opacity .15s',
-  fontFamily: 'inherit',
+// inputStyle is now handled by CSS class "auth-input" in index.css
+// Keeping this only for the OTP field which needs extra overrides
+const otpExtraStyle = {
+  textAlign: 'center', fontSize: 22, letterSpacing: '0.35em', fontWeight: 700,
 }
 
 /* ── Login Form ── */
 function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
-  const [email,    setEmail]    = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true); setError('')
+  const submit = async (e) => {
+    e.preventDefault(); setLoading(true); setError('')
     try {
-      const res  = await fetch(`${BASE}/api/auth/login/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+      const res  = await fetch(`${BASE}/api/auth/login/`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password}) })
       const data = await res.json()
-      if (!res.ok) { setError(data.detail || data.message || 'Invalid credentials'); return }
-      if (data.requires_2fa) { onRequires2FA(data.user_id) }
-      else { onSuccess(data) }
+      if (!res.ok) { setError(data.error||data.detail||'Invalid credentials'); return }
+      if (data.requires_2fa) onRequires2FA(data.user_id)
+      else onSuccess(data)
     } catch { setError('Network error. Please try again.') }
     finally { setLoading(false) }
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {error && (
-        <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#dc2626', fontSize: 13 }}>
-          {error}
-        </div>
-      )}
+    <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:14}}>
+      {error && <div style={{padding:'9px 12px',borderRadius:7,background:'rgba(239,68,68,0.07)',border:'1px solid rgba(239,68,68,0.18)',color:'#dc2626',fontSize:12}}>{error}</div>}
       <div>
-        <label style={labelStyle}>Email Address</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} placeholder="you@example.com"
-          onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.12)'} />
+        <label style={labelStyle}>Email</label>
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required className="auth-input" placeholder="you@example.com" />
       </div>
       <div>
         <label style={labelStyle}>Password</label>
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={inputStyle} placeholder="••••••••"
-          onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.12)'} />
+        <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required className="auth-input" placeholder="••••••••" />
       </div>
-      <button type="submit" disabled={loading} style={{ ...btnStyle, opacity: loading ? 0.7 : 1 }}>
+      <button type="submit" disabled={loading} style={{width:'100%',padding:'12px',background:ACCENT,color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer',transition:'opacity .15s',opacity:loading?0.7:1}}>
         {loading ? 'Signing in…' : 'Sign In'}
       </button>
-      <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(0,0,0,0.5)', margin: 0 }}>
+      <p style={{textAlign:'center',fontSize:12,color:'rgba(0,0,0,0.42)',margin:0}}>
         Don't have an account?{' '}
-        <button type="button" onClick={onSwitch} style={{ background: 'none', border: 'none', color: ACCENT, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-          Create one
-        </button>
+        <button type="button" onClick={onSwitch} style={{background:'none',border:'none',color:ACCENT,cursor:'pointer',fontSize:12,fontWeight:600}}>Create one</button>
       </p>
     </form>
   )
@@ -93,58 +70,44 @@ function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
 
 /* ── Register Form ── */
 function RegisterForm({ onSwitch, onSuccess }) {
-  const [name,     setName]     = useState('')
-  const [email,    setEmail]    = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true); setError('')
+  const submit = async (e) => {
+    e.preventDefault(); setLoading(true); setError('')
     try {
-      const res  = await fetch(`${BASE}/api/auth/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      })
+      const res  = await fetch(`${BASE}/api/auth/register/`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,password}) })
       const data = await res.json()
-      if (!res.ok) { setError(data.detail || data.message || 'Registration failed'); return }
+      if (!res.ok) { setError(data.error||data.detail||'Registration failed'); return }
       onSuccess(data)
     } catch { setError('Network error. Please try again.') }
     finally { setLoading(false) }
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {error && (
-        <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#dc2626', fontSize: 13 }}>
-          {error}
-        </div>
-      )}
+    <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:14}}>
+      {error && <div style={{padding:'9px 12px',borderRadius:7,background:'rgba(239,68,68,0.07)',border:'1px solid rgba(239,68,68,0.18)',color:'#dc2626',fontSize:12}}>{error}</div>}
       <div>
         <label style={labelStyle}>Full Name</label>
-        <input type="text" value={name} onChange={e => setName(e.target.value)} required style={inputStyle} placeholder="John Doe"
-          onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.12)'} />
+        <input type="text" value={name} onChange={e=>setName(e.target.value)} required className="auth-input" placeholder="John Doe" />
       </div>
       <div>
-        <label style={labelStyle}>Email Address</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} placeholder="you@example.com"
-          onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.12)'} />
+        <label style={labelStyle}>Email</label>
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required className="auth-input" placeholder="you@example.com" />
       </div>
       <div>
         <label style={labelStyle}>Password</label>
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={inputStyle} placeholder="Minimum 8 characters"
-          onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.12)'} />
+        <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required className="auth-input" placeholder="Min. 8 characters" />
       </div>
-      <button type="submit" disabled={loading} style={{ ...btnStyle, opacity: loading ? 0.7 : 1 }}>
+      <button type="submit" disabled={loading} style={{width:'100%',padding:'12px',background:ACCENT,color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer',transition:'opacity .15s',opacity:loading?0.7:1}}>
         {loading ? 'Creating account…' : 'Create Account'}
       </button>
-      <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(0,0,0,0.5)', margin: 0 }}>
+      <p style={{textAlign:'center',fontSize:12,color:'rgba(0,0,0,0.42)',margin:0}}>
         Already have an account?{' '}
-        <button type="button" onClick={onSwitch} style={{ background: 'none', border: 'none', color: ACCENT, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-          Sign in
-        </button>
+        <button type="button" onClick={onSwitch} style={{background:'none',border:'none',color:ACCENT,cursor:'pointer',fontSize:12,fontWeight:600}}>Sign in</button>
       </p>
     </form>
   )
@@ -152,46 +115,35 @@ function RegisterForm({ onSwitch, onSuccess }) {
 
 /* ── OTP Form ── */
 function OTPForm({ userId, onBack, onSuccess }) {
-  const [code,    setCode]    = useState('')
+  const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
+  const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault()
-    if (code.length !== 6) { setError('Please enter 6-digit code'); return }
+    if (code.length !== 6) { setError('Enter 6-digit code'); return }
     setLoading(true); setError('')
     try {
-      const res  = await fetch(`${BASE}/api/auth/2fa/verify/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, code }),
-      })
+      const res  = await fetch(`${BASE}/api/auth/2fa/verify/`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:userId,code}) })
       const data = await res.json()
-      if (!res.ok) { setError(data.detail || 'Invalid OTP'); return }
+      if (!res.ok) { setError(data.error||data.detail||'Invalid OTP'); return }
       onSuccess(data)
-    } catch { setError('Verification failed. Please try again.') }
+    } catch { setError('Verification failed.') }
     finally { setLoading(false) }
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:14}}>
       <div>
         <label style={labelStyle}>6-digit code from Google Authenticator</label>
-        <input
-          type="text" value={code} maxLength={6}
-          onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          style={{ ...inputStyle, textAlign: 'center', fontSize: 24, letterSpacing: '0.4em', fontWeight: 700 }}
-          placeholder="000000"
-          onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.12)'}
-        />
+        <input type="text" value={code} maxLength={6} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))}
+          className="auth-input" style={otpExtraStyle} placeholder="000000" />
       </div>
-      {error && <div style={{ color: '#dc2626', fontSize: 13, textAlign: 'center' }}>{error}</div>}
-      <button type="submit" disabled={loading || code.length !== 6} style={{ ...btnStyle, opacity: loading || code.length !== 6 ? 0.5 : 1 }}>
+      {error && <div style={{color:'#dc2626',fontSize:12,textAlign:'center'}}>{error}</div>}
+      <button type="submit" disabled={loading||code.length!==6} style={{width:'100%',padding:'12px',background:ACCENT,color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer',opacity:loading||code.length!==6?0.5:1}}>
         {loading ? 'Verifying…' : 'Verify OTP'}
       </button>
-      <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontSize: 13, padding: '6px 0' }}>
-        ← Back to Login
-      </button>
+      <button type="button" onClick={onBack} style={{background:'none',border:'none',color:'rgba(0,0,0,0.38)',cursor:'pointer',fontSize:12,padding:'4px 0'}}>← Back to Login</button>
     </form>
   )
 }
@@ -200,43 +152,31 @@ function OTPForm({ userId, onBack, onSuccess }) {
 function BrandPanel() {
   return (
     <div style={{
-      width: 380, flexShrink: 0,
-      background: 'linear-gradient(160deg, #0a0a0a 0%, #0d1a14 100%)',
-      padding: '52px 44px',
-      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      position: 'relative', overflow: 'hidden',
+      width:320, flexShrink:0,
+      background:'linear-gradient(160deg,#070a12 0%,#0a1a14 100%)',
+      padding:'40px 32px',
+      display:'flex', flexDirection:'column', justifyContent:'space-between',
+      position:'relative', overflow:'hidden',
     }}>
-      {/* Glow */}
-      <div style={{ position: 'absolute', bottom: -60, right: -60, width: 280, height: 280, borderRadius: '50%', background: `radial-gradient(circle, ${ACCENT}25 0%, transparent 70%)`, pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', top: -40, left: -40, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(55,138,221,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-      {/* Logo */}
+      <div style={{position:'absolute',bottom:-40,right:-40,width:220,height:220,borderRadius:'50%',background:`radial-gradient(circle,${ACCENT}20 0%,transparent 70%)`,pointerEvents:'none'}}/>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 48 }}>
-          <span style={{ fontSize: 20, fontWeight: 900, color: ACCENT, letterSpacing: '-0.5px' }}>JOB</span>
-          <span style={{ fontSize: 20, fontWeight: 900, color: '#f3f6ff', letterSpacing: '-0.5px' }}>HUNTER</span>
+        <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:36}}>
+          <span style={{fontSize:16,fontWeight:900,color:ACCENT,fontFamily:"'Syne',sans-serif"}}>JOB</span>
+          <span style={{fontSize:16,fontWeight:900,color:'#f3f6ff',fontFamily:"'Syne',sans-serif"}}>HUNTER</span>
         </div>
-
-        <div style={{ fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.22em', color: `${ACCENT}99`, marginBottom: 16 }}>◈ AI-POWERED PLATFORM</div>
-        <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 900, color: '#f3f6ff', lineHeight: 1.15, letterSpacing: '-0.03em', marginBottom: 20 }}>
-          Land your<br />dream job<br /><span style={{ color: ACCENT }}>faster.</span>
+        <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:'0.2em',color:`${ACCENT}88`,marginBottom:12}}>◈ AI-POWERED PLATFORM</div>
+        <h2 style={{fontSize:'clamp(1.3rem,2.2vw,1.75rem)',fontWeight:900,color:'#f3f6ff',lineHeight:1.2,margin:'0 0 14px',fontFamily:"'Syne',sans-serif"}}>
+          Land your<br/>dream job<br/><span style={{color:ACCENT}}>faster.</span>
         </h2>
-        <p style={{ fontSize: 13, color: 'rgba(243,246,255,0.45)', lineHeight: 1.7, maxWidth: 260 }}>
-          Upload your CV, get instant ATS scores, and match to hundreds of jobs using AI.
+        <p style={{fontSize:11,color:'rgba(243,246,255,0.42)',lineHeight:1.7,maxWidth:220,fontFamily:"'DM Mono',monospace"}}>
+          Upload your CV, get ATS scores, and match to jobs using AI.
         </p>
       </div>
-
-      {/* Feature list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {[
-          { icon: '◎', text: 'ATS Score Analysis' },
-          { icon: '◈', text: 'AI Job Matching' },
-          { icon: '◑', text: 'Skill Gap Reports' },
-          { icon: '✦', text: 'CV Builder Agent' },
-        ].map(f => (
-          <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ color: ACCENT, fontSize: 13, width: 16 }}>{f.icon}</span>
-            <span style={{ fontSize: 13, color: 'rgba(243,246,255,0.55)', fontFamily: 'monospace' }}>{f.text}</span>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {[['◎','ATS Score'],['◈','AI Matching'],['◑','Skill Gap'],['✦','CV Builder']].map(([icon,text])=>(
+          <div key={text} style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{color:ACCENT,fontSize:11}}>{icon}</span>
+            <span style={{fontSize:11,color:'rgba(243,246,255,0.48)',fontFamily:"'DM Mono',monospace"}}>{text}</span>
           </div>
         ))}
       </div>
@@ -246,34 +186,29 @@ function BrandPanel() {
 
 /* ── Main Auth Page ── */
 export default function AuthPage() {
-  const [mode,    setMode]    = useState('login')
-  const [animKey, setAnimKey] = useState(0)
-  const [userId,  setUserId]  = useState(null)
-  const navigate              = useNavigate()
+  const navigate = useNavigate()
+  const [ready]   = useState(() => !isLoggedIn())
+  const [mode,     setMode]    = useState('login')
+  const [animKey,  setAnimKey] = useState(0)
+  const [userId,   setUserId]  = useState(null)
 
-  useEffect(() => {
-    if (localStorage.getItem('access_token')) navigate('/dashboard', { replace: true })
-  }, [navigate])
+  useEffect(() => { if (!ready) navigate('/dashboard',{replace:true}) }, [ready,navigate])
+  if (!ready) return null
 
-  function switchMode(next) {
-    if (next === mode) return
-    setMode(next); setAnimKey(k => k + 1)
-  }
-
-  function handleRequires2FA(uid) { setUserId(uid); setMode('otp'); setAnimKey(k => k + 1) }
-
+  function switchMode(next) { if(next===mode)return; setMode(next); setAnimKey(k=>k+1) }
+  function handleRequires2FA(uid) { setUserId(uid); setMode('otp'); setAnimKey(k=>k+1) }
   function saveAndGo(data) {
-    const { access, refresh } = extractTokens(data)
-    if (!access) { console.error('No access token in response:', data); return }
-    localStorage.setItem('access_token', access)
-    if (refresh) localStorage.setItem('refresh_token', refresh)
-    navigate('/dashboard', { replace: true })
+    const {access,refresh} = extractTokens(data)
+    if (!access) return
+    localStorage.setItem('access_token',access)
+    if (refresh) localStorage.setItem('refresh_token',refresh)
+    navigate('/dashboard',{replace:true})
   }
 
   const HEADING = {
-    login:    { tag: 'Authentication',   h: ['Welcome ', 'back.'] },
-    register: { tag: 'New account',      h: ['Create your ', 'account.'] },
-    otp:      { tag: 'Two-factor auth',  h: ['Verify your ', 'identity.'] },
+    login:    {tag:'Sign In',        h:['Welcome ','back.']},
+    register: {tag:'Create Account', h:['Create your ','account.']},
+    otp:      {tag:'Two-Factor',     h:['Verify your ','identity.']},
   }
   const h = HEADING[mode]
 
@@ -281,59 +216,92 @@ export default function AuthPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
-        *, *::before, *::after { box-sizing: border-box; }
-        body { margin: 0; font-family: 'DM Sans', sans-serif; }
-        @keyframes scaleIn { from { opacity:0; transform:scale(0.95) } to { opacity:1; transform:scale(1) } }
-        @keyframes slideIn { from { opacity:0; transform:translateX(16px) } to { opacity:1; transform:translateX(0) } }
+        *,*::before,*::after{box-sizing:border-box;}
+        body{margin:0;font-family:'DM Sans',sans-serif;}
+        @keyframes authIn{from{opacity:0;transform:scale(0.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        @keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+        .auth-brand{display:flex;}
+        /* Ensure auth-input focus accent is visible */
+        .auth-input:focus { border-color: #1d9e75 !important; box-shadow: 0 0 0 3px rgba(29,158,117,0.10); }
+        @media(max-width:600px){
+          .auth-brand{display:none!important;}
+          .auth-form-panel{padding:28px 20px!important;}
+          .auth-home-link{display:none!important;}
+        }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f0f0ea', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{minHeight:'100vh',background:'#eeeee8',display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',position:'relative'}}>
+
+        {/* Back to Home — top left */}
+        <a href="/" className="auth-home-link" style={{
+          position:'fixed',top:16,left:20,display:'flex',alignItems:'center',gap:5,
+          fontSize:11,fontFamily:"'DM Mono',monospace",color:'rgba(0,0,0,0.40)',
+          textDecoration:'none',padding:'5px 10px',borderRadius:7,
+          border:'1px solid rgba(0,0,0,0.09)',background:'rgba(255,255,255,0.65)',
+          backdropFilter:'blur(8px)',transition:'all 0.2s',zIndex:10,
+        }}
+          onMouseEnter={e=>{e.currentTarget.style.color='#0a0a0a';e.currentTarget.style.borderColor='rgba(0,0,0,0.20)';}}
+          onMouseLeave={e=>{e.currentTarget.style.color='rgba(0,0,0,0.40)';e.currentTarget.style.borderColor='rgba(0,0,0,0.09)';}}>
+          ← Home
+        </a>
+
+        {/* Card — smaller maxWidth */}
         <div style={{
-          display: 'flex', width: '100%', maxWidth: 920, minHeight: 600,
-          borderRadius: 24, overflow: 'hidden',
-          boxShadow: '0 40px 100px rgba(0,0,0,0.14)',
-          border: '1px solid rgba(0,0,0,0.07)',
-          animation: 'scaleIn 0.5s cubic-bezier(0.22,1,0.36,1)',
+          display:'flex',width:'100%',maxWidth:760,
+          borderRadius:20,overflow:'hidden',
+          boxShadow:'0 24px 64px rgba(0,0,0,0.10)',
+          border:'1px solid rgba(0,0,0,0.06)',
+          animation:'authIn 0.4s cubic-bezier(0.22,1,0.36,1)',
         }}>
-
           {/* Brand */}
-          <BrandPanel />
+          <div className="auth-brand"><BrandPanel /></div>
 
-          {/* Form side */}
-          <div style={{ flex: 1, background: '#fff', padding: '52px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-            {/* Subtle glow */}
-            <div style={{ position: 'absolute', top: -80, right: -80, width: 240, height: 240, borderRadius: '50%', background: `radial-gradient(circle, ${ACCENT}0a 0%, transparent 70%)`, pointerEvents: 'none' }} />
+          {/* Form */}
+          <div className="auth-form-panel" style={{
+            flex:1, background:'#fff',
+            padding:'36px 36px',
+            display:'flex', flexDirection:'column', justifyContent:'center',
+            position:'relative', overflow:'hidden',
+          }}>
+            <div style={{position:'absolute',top:-50,right:-50,width:180,height:180,borderRadius:'50%',background:`radial-gradient(circle,${ACCENT}07 0%,transparent 70%)`,pointerEvents:'none'}}/>
 
-            {/* Tabs */}
+            {/* Tabs — CENTERED */}
             {mode !== 'otp' && (
-              <div style={{ display: 'flex', gap: 3, background: '#f0efeb', borderRadius: 10, padding: 3, width: 'fit-content', marginBottom: 36 }}>
-                {[['login', 'Sign in'], ['register', 'Register']].map(([m, label]) => (
-                  <button key={m} type="button" onClick={() => switchMode(m)} style={{
-                    padding: '8px 22px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    fontSize: 12, fontFamily: "'DM Mono', monospace",
-                    background: mode === m ? '#fff' : 'transparent',
-                    color: mode === m ? '#0a0a0a' : 'rgba(0,0,0,0.35)',
-                    boxShadow: mode === m ? '0 1px 6px rgba(0,0,0,0.09)' : 'none',
-                    transition: 'all 0.2s ease',
-                    fontWeight: mode === m ? 600 : 400,
-                  }}>{label}</button>
-                ))}
+              <div style={{display:'flex',justifyContent:'center',marginBottom:28}}>
+                <div style={{display:'flex',gap:2,background:'#f0efeb',borderRadius:9,padding:3}}>
+                  {[['login','Sign in'],['register','Register']].map(([m,label])=>(
+                    <button key={m} type="button" onClick={()=>switchMode(m)} style={{
+                      padding:'7px 20px',borderRadius:7,border:'none',cursor:'pointer',
+                      fontSize:12,fontFamily:"'DM Mono',monospace",
+                      background:mode===m?'#fff':'transparent',
+                      color:mode===m?'#0a0a0a':'rgba(0,0,0,0.30)',
+                      boxShadow:mode===m?'0 1px 4px rgba(0,0,0,0.07)':'none',
+                      transition:'all 0.2s',fontWeight:mode===m?600:400,
+                      whiteSpace:'nowrap',
+                    }}>{label}</button>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Heading */}
-            <div style={{ marginBottom: 32 }}>
-              <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, marginBottom: 10 }}>◈ {h.tag}</div>
-              <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: 'clamp(1.7rem,3vw,2.3rem)', color: '#0a0a0a', letterSpacing: '-0.025em', lineHeight: 1.1, margin: 0 }}>
-                {h.h[0]}<span style={{ color: ACCENT }}>{h.h[1]}</span>
+            <div style={{marginBottom:24}}>
+              <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:'0.18em',textTransform:'uppercase',color:ACCENT,marginBottom:7}}>◈ {h.tag}</div>
+              <h1 style={{fontFamily:"'Syne',sans-serif",fontWeight:900,fontSize:'clamp(1.4rem,2.5vw,1.9rem)',color:'#0a0a0a',letterSpacing:'-0.02em',lineHeight:1.1,margin:0}}>
+                {h.h[0]}<span style={{color:ACCENT}}>{h.h[1]}</span>
               </h1>
             </div>
 
-            {/* Animated form swap */}
-            <div key={animKey} style={{ animation: 'slideIn 0.28s cubic-bezier(0.22,1,0.36,1)' }}>
-              {mode === 'login'    && <LoginForm    onSwitch={() => switchMode('register')} onRequires2FA={handleRequires2FA} onSuccess={saveAndGo} />}
-              {mode === 'register' && <RegisterForm onSwitch={() => switchMode('login')}    onSuccess={saveAndGo} />}
-              {mode === 'otp'      && <OTPForm      userId={userId} onBack={() => { setUserId(null); switchMode('login') }} onSuccess={saveAndGo} />}
+            {/* Form content */}
+            <div key={animKey} style={{animation:'slideIn 0.22s cubic-bezier(0.22,1,0.36,1)'}}>
+              {mode==='login'    && <LoginForm    onSwitch={()=>switchMode('register')} onRequires2FA={handleRequires2FA} onSuccess={saveAndGo}/>}
+              {mode==='register' && <RegisterForm onSwitch={()=>switchMode('login')}    onSuccess={saveAndGo}/>}
+              {mode==='otp'      && <OTPForm      userId={userId} onBack={()=>{setUserId(null);switchMode('login')}} onSuccess={saveAndGo}/>}
+            </div>
+
+            {/* Mobile back to home */}
+            <div style={{marginTop:20,textAlign:'center',display:'none'}} className="auth-home-mobile">
+              <a href="/" style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:'rgba(0,0,0,0.35)',textDecoration:'none'}}>← Back to Home</a>
             </div>
           </div>
         </div>

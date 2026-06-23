@@ -1,28 +1,28 @@
 // src/pages/Landing.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar      from "../components/Landing/Navbar";
 import Hero        from "../components/Landing/Hero";
 import BentoGrid   from "../components/Landing/BentoGrid";
 import Carousel    from "../components/Landing/Carousel";
 import TeamSection from "../components/Landing/TeamSection";
 import Footer      from "../components/Landing/Footer";
-import { useNavigate } from "react-router-dom";
 
 export default function Landing() {
   const navigate = useNavigate();
   const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    setTheme(savedTheme);
-    document.documentElement.setAttribute("data-theme", savedTheme);
+    const saved = localStorage.getItem("theme") || "dark";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
   };
 
   const handleFeatureClick = (feature) => {
@@ -34,31 +34,28 @@ export default function Landing() {
       case "cv-maker":
         navigate("/cv-maker");
         break;
-      case "job-scraping":
-      case "jobs":
-        navigate("/job-scraping");
-        break;
       case "dashboard":
         navigate("/dashboard");
         break;
       default:
-        console.log("Feature:", feature);
+        break;
     }
   };
 
-  const onAnalyze = () => navigate("/cv-analysis");
-
   return (
-    <div className="app-shell min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
+    <div
+      className="landing-shell"
+      style={{ minHeight:"100vh", overflowX:"hidden" }}
+    >
       <Navbar
         theme={theme}
         setTheme={toggleTheme}
-        onAnalyze={onAnalyze}
+        onAnalyze={() => navigate("/cv-analysis")}
         isAnalyzePage={false}
         onHome={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       />
 
-      <Hero onFeatureClick={handleFeatureClick} onAnalyze={onAnalyze} />
+      <Hero onFeatureClick={handleFeatureClick} />
 
       <BentoGrid onFeatureClick={handleFeatureClick} />
 
@@ -66,7 +63,7 @@ export default function Landing() {
 
       <TeamSection />
 
-      <Footer onAnalyze={onAnalyze} />
+      <Footer onFeatureClick={handleFeatureClick} onAnalyze={() => navigate("/cv-analysis")} />
     </div>
   );
 }

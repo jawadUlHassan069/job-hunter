@@ -1,4 +1,4 @@
-// src/components/landing/BentoGrid.jsx
+// src/components/Landing/BentoGrid.jsx
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -6,74 +6,77 @@ import { BENTO_CARDS } from "@/data.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ─── Single card ───────────────────────────────────────────────── */
 function BentoCard({ card }) {
   const ref = useRef(null);
-
-  const enter = () => {
-    if (!ref.current) return;
-    ref.current.style.borderColor = `${card.accent}50`;
-    ref.current.style.boxShadow   = `0 0 50px ${card.accent}16`;
-  };
-  const leave = () => {
-    if (!ref.current) return;
-    ref.current.style.borderColor = `${card.accent}14`;
-    ref.current.style.boxShadow   = "none";
-  };
-
   return (
     <div
       ref={ref}
-      onMouseEnter={enter}
-      onMouseLeave={leave}
-      className={`bento-card group rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-between cursor-pointer ${card.span}`}
+      onMouseEnter={() => {
+        if (!ref.current) return;
+        ref.current.style.borderColor = `${card.accent}55`;
+        ref.current.style.transform   = "translateY(-3px)";
+        ref.current.style.boxShadow   = `0 8px 28px ${card.accent}14`;
+      }}
+      onMouseLeave={() => {
+        if (!ref.current) return;
+        ref.current.style.borderColor = `${card.accent}22`;
+        ref.current.style.transform   = "none";
+        ref.current.style.boxShadow   = "none";
+      }}
+      className={`bento-card ${card.span}`}
       style={{
-        background:  "var(--card-bg)",
-        border:      `1px solid ${card.accent}14`,
-        minHeight:   card.large ? "340px" : "200px",
-        transition:  "transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
+        /* Never start invisible — GSAP will animate from opacity:0
+           but clearProps ensures it always ends at opacity:1 */
+        background:     "var(--card-bg)",
+        border:         `1px solid ${card.accent}22`,
+        borderRadius:   14,
+        padding:        "22px",
+        display:        "flex",
+        flexDirection:  "column",
+        justifyContent: "space-between",
+        minHeight:      card.large ? "240px" : "155px",
+        cursor:         "pointer",
+        transition:     "transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
       }}
     >
       <div>
-        {/* Tag */}
-        <div
-          className="text-[10px] sm:text-xs font-mono-ui mb-2 sm:mb-3 tracking-[0.2em] uppercase"
-          style={{ color: `${card.accent}90` }}
-        >
+        {/* Tag — full opacity, uses accent color directly */}
+        <div style={{
+          fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
+          letterSpacing: "0.16em", textTransform: "uppercase",
+          color: card.accent,          /* no opacity reduction */
+          marginBottom: 10,
+          fontWeight: 600,
+        }}>
           {card.tag}
         </div>
 
-        {/* Headline — theme-aware */}
-        <h3
-          className={`font-black font-heading leading-tight mb-2 sm:mb-3 ${
-            card.large ? "text-2xl sm:text-3xl md:text-4xl" : "text-lg sm:text-xl"
-          }`}
-          style={{ color: "var(--text)" }}
-        >
+        {/* Headline */}
+        <h3 style={{
+          margin: 0,
+          fontFamily: "'Syne', sans-serif",
+          fontWeight: 800,
+          fontSize: card.large ? "clamp(1.15rem, 2vw, 1.55rem)" : "clamp(0.92rem, 1.6vw, 1.08rem)",
+          lineHeight: 1.25,
+          color: "var(--text)",        /* CSS variable — works in both modes */
+          marginBottom: 9,
+        }}>
           {card.headline}
         </h3>
 
-        {/* Body — theme-aware muted */}
-        <p
-          className="text-xs sm:text-sm leading-relaxed"
-          style={{ color: "var(--text-muted)" }}
-        >
+        {/* Body */}
+        <p style={{
+          margin: 0, fontSize: 12, lineHeight: 1.7,
+          color: "var(--text-muted)",  /* CSS variable — readable in both modes */
+          fontFamily: "'DM Mono', monospace",
+        }}>
           {card.body}
         </p>
       </div>
 
-      <div className="flex items-center justify-between mt-4 sm:mt-6">
-        <span
-          className="text-2xl sm:text-3xl transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12 inline-block"
-          style={{ color: card.accent }}
-          aria-hidden="true"
-        >
-          {card.icon}
-        </span>
-        <span
-          className="text-xs font-mono-ui transition-colors duration-300"
-          style={{ color: "var(--text-faint)" }}
-        >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18 }}>
+        <span style={{ fontSize: 22, color: card.accent }}>{card.icon}</span>
+        <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "var(--text-faint)" }}>
           Learn more →
         </span>
       </div>
@@ -81,63 +84,74 @@ function BentoCard({ card }) {
   );
 }
 
-/* ─── Grid ──────────────────────────────────────────────────────── */
 export default function BentoGrid() {
   const sectionRef = useRef(null);
 
   useEffect(() => {
+    // Set initial opacity via JS so SSR/React doesn't flash invisible cards
+    const cards = document.querySelectorAll(".bento-card");
+    cards.forEach(c => { c.style.opacity = "0"; c.style.transform = "translateY(20px)"; });
+
     const ctx = gsap.context(() => {
       gsap.fromTo(".bento-header",
-        { opacity: 0, y: 35 },
+        { opacity: 0, y: 18 },
         {
-          opacity: 1, y: 0, duration: 0.8, ease: "power3.out",
-          scrollTrigger: { trigger: sectionRef.current, start: "top 80%", once: true },
+          opacity: 1, y: 0, duration: 0.6, ease: "power3.out",
+          clearProps: "opacity,transform",
+          scrollTrigger: { trigger: sectionRef.current, start: "top 90%", once: true },
         }
       );
       gsap.fromTo(".bento-card",
-        { opacity: 0, y: 45, scale: 0.95 },
+        { opacity: 0, y: 20 },
         {
-          opacity: 1, y: 0, scale: 1, duration: 0.65,
-          stagger: { amount: 0.5, from: "start" },
-          ease: "power3.out",
-          scrollTrigger: { trigger: ".bento-grid", start: "top 78%", once: true },
+          opacity: 1, y: 0, duration: 0.5, stagger: 0.055, ease: "power3.out",
+          clearProps: "opacity,transform",          /* critical — never leaves at opacity:0 */
+          scrollTrigger: { trigger: ".bento-grid", start: "top 90%", once: true },
+          onComplete: () => {
+            /* Fallback — force visible if GSAP somehow didn't fire */
+            cards.forEach(c => { c.style.opacity = "1"; c.style.transform = "none"; });
+          },
         }
       );
     }, sectionRef);
+
     return () => ctx.revert();
   }, []);
 
   return (
-    <section id="features" ref={sectionRef} className="py-20 sm:py-28 px-4 sm:px-6">
-      <div className="max-w-7xl mx-auto">
+    <section id="features" ref={sectionRef}
+      style={{ padding: "56px 32px 48px", background: "var(--bg)" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
-        {/* Header */}
-        <div className="bento-header opacity-0 mb-10 sm:mb-14">
-          <div
-            className="text-xs font-mono-ui mb-3 tracking-[0.22em] uppercase"
-            style={{ color: "#1d9e75" }}
-          >
+        {/* Header — no GSAP initial opacity:0 on the wrapper, only on the class */}
+        <div className="bento-header" style={{ marginBottom: 36 }}>
+          <div style={{
+            fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: "0.2em", textTransform: "uppercase",
+            color: "var(--accent)", marginBottom: 12,
+          }}>
             ◈ Everything You Need
           </div>
-          <h2
-            className="text-4xl sm:text-5xl md:text-6xl font-black font-heading leading-tight"
-            style={{ color: "var(--text)" }}
-          >
-            Built for
-            <br />
-            <span className="text-outline">every step</span>
+          <h2 style={{
+            margin: 0, fontFamily: "'Syne', sans-serif", fontWeight: 900,
+            fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", lineHeight: 1.05,
+            color: "var(--text)",
+          }}>
+            Built for every step
           </h2>
         </div>
 
         {/* Grid */}
-        <div
-          className="bento-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
-          style={{ gridAutoRows: "minmax(190px, auto)" }}
-        >
-          {BENTO_CARDS.map((card) => (
-            <BentoCard key={card.id} card={card} />
-          ))}
+        <div className="bento-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+          {BENTO_CARDS.map(card => <BentoCard key={card.id} card={card} />)}
         </div>
+
+        <style>{`
+          @media(max-width:900px){ .bento-grid{ grid-template-columns:repeat(2,1fr)!important; } }
+          @media(max-width:520px){ .bento-grid{ grid-template-columns:1fr!important; } }
+          /* Light mode card border enhancement */
+          [data-theme="light"] .bento-card { box-shadow: 0 1px 4px rgba(11,17,32,0.06); }
+        `}</style>
       </div>
     </section>
   );

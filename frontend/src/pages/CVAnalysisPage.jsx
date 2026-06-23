@@ -535,7 +535,7 @@ export default function CVAnalysisPage() {
                     </div>
                   </div>
                 )}
-                <ATSPanel cvData={cvData} score={jobs[0]?.match_score ?? 72} />
+                <ATSPanel cvData={cvData} score={cvData.ats_score ?? (jobs[0]?.match_score ?? 72)} />
               </div>
             </div>
 

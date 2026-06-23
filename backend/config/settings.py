@@ -130,7 +130,9 @@ CELERY_BROKER_URL      = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND  = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT  = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_TASK_ALWAYS_EAGER = True
+# In dev (DEBUG=True) run tasks inline so you don't need Redis running.
+# In prod set CELERY_ALWAYS_EAGER=False in .env to use real async workers.
+CELERY_TASK_ALWAYS_EAGER     = config('CELERY_ALWAYS_EAGER', default=DEBUG, cast=bool)
 CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
@@ -144,6 +146,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ── LLM ────────────────────────────────────────────────
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+GROQ_API_KEY   = config('GROQ_API_KEY',   default='')
 
 # ── Sentry ─────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')

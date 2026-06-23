@@ -168,9 +168,8 @@ export const TECH_STACK = [
 
 export const NAV_LINKS = [
   { label: "Features", href: "#features" },
-  { label: "Jobs", href: "#jobs" },
-  { label: "How it Works", href: "#how" },
-  { label: "Team", href: "#team" },
+  { label: "Jobs",     href: "#jobs"     },
+  { label: "Team",     href: "#team"     },
 ];
 
 export const ACCENT = "#1d9e75";

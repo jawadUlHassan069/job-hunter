@@ -1,26 +1,30 @@
 import requests
 import json
 import re
+import os
 
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from .prompts import SYSTEM_PROMPT
 
-GROQ_API_KEY = "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"
+# Read from env — never hardcode API keys in source
+def _get_groq_key():
+    key = getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY', '')
+    if not key:
+        raise ValueError('GROQ_API_KEY is not set in environment')
+    return key
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])   # ← was AllowAny (anyone could drain quota)
 def chat(request):
 
     messages = request.data.get("messages", [])
 
     try:
-
-        # =========================
-        # MAIN AI CHAT
-        # =========================
+        GROQ_API_KEY = _get_groq_key()
 
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",

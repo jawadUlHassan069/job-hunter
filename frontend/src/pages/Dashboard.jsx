@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.jsx
 // Connect to: GET /api/jobs/applications/  GET /api/jobs/saved/  GET /api/cv/  PATCH /api/jobs/applications/:id/
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* ─── API helper ──────────────────────────────────────────── */
@@ -45,14 +45,16 @@ const PAGE_CSS = `
 const mono = "'JetBrains Mono', monospace";
 const heading = "'Plus Jakarta Sans', sans-serif";
 
+// Keys match backend STATUS_CHOICES: applied / interview / offer / rejected
 const STATUS_COLORS = {
-  applied:     { bg: "rgba(59,130,246,0.14)", border: "rgba(59,130,246,0.3)",  text: "rgba(147,197,253,0.9)",   dot: "#3b82f6" },
-  interviewing:{ bg: "rgba(234,179,8,0.14)",  border: "rgba(234,179,8,0.3)",   text: "rgba(253,224,71,0.9)",    dot: "#eab308" },
-  offer:       { bg: "rgba(29,158,117,0.14)", border: "rgba(29,158,117,0.3)",  text: "rgba(52,211,153,0.9)",    dot: "#1d9e75" },
-  rejected:    { bg: "rgba(239,68,68,0.14)",  border: "rgba(239,68,68,0.3)",   text: "rgba(252,165,165,0.9)",   dot: "#ef4444" },
-  saved:       { bg: "rgba(167,139,250,0.14)",border: "rgba(167,139,250,0.3)", text: "rgba(196,181,253,0.9)",   dot: "#a78bfa" },
+  applied:   { bg: "rgba(59,130,246,0.14)",  border: "rgba(59,130,246,0.3)",  text: "rgba(147,197,253,0.9)",  dot: "#3b82f6" },
+  interview: { bg: "rgba(234,179,8,0.14)",   border: "rgba(234,179,8,0.3)",   text: "rgba(253,224,71,0.9)",   dot: "#eab308" },
+  offer:     { bg: "rgba(29,158,117,0.14)",  border: "rgba(29,158,117,0.3)",  text: "rgba(52,211,153,0.9)",   dot: "#1d9e75" },
+  rejected:  { bg: "rgba(239,68,68,0.14)",   border: "rgba(239,68,68,0.3)",   text: "rgba(252,165,165,0.9)",  dot: "#ef4444" },
+  saved:     { bg: "rgba(167,139,250,0.14)", border: "rgba(167,139,250,0.3)", text: "rgba(196,181,253,0.9)",  dot: "#a78bfa" },
 };
-const STATUSES = ["applied", "interviewing", "offer", "rejected"];
+// ← "interview" matches the backend model choice, NOT "interviewing"
+const STATUSES = ["applied", "interview", "offer", "rejected"];
 
 function StatusBadge({ status }) {
   const c = STATUS_COLORS[status] || STATUS_COLORS.applied;
@@ -160,41 +162,25 @@ export default function DashboardPage() {
     document.head.appendChild(s);
   }, []);
 
-  const loadData = useCallback(async () => {
-    setLoading(true); setError(null);
-    try {
-      const [appsRes, savedRes, cvRes, userRes] = await Promise.all([
-        api("/api/jobs/applications/"),
-        api("/api/jobs/saved/"),
-        api("/api/cv/"),
-        api("/api/auth/me/").catch(() => null),
-      ]);
-      setApplications(Array.isArray(await appsRes.json()) ? await appsRes.clone().json() : []);
-      setSavedJobs(Array.isArray(await savedRes.json()) ? await savedRes.clone().json() : []);
-      setCvList(Array.isArray(await cvRes.json()) ? await cvRes.clone().json() : []);
-      if (userRes?.ok) setUser(await userRes.json());
-    } catch (e) {
-      if (e.message === "AUTH") { navigate("/login"); return; }
-      setError("Failed to load dashboard data.");
-    } finally { setLoading(false); }
-  }, [navigate]);
-
-  // Re-fetch properly
+  // Single data-fetch on mount — no duplicate, no dead useCallback
   useEffect(() => {
     const load = async () => {
       setLoading(true); setError(null);
       try {
-        const [appsRes, savedRes, cvRes] = await Promise.all([
+        const [appsRes, savedRes, cvRes, userRes] = await Promise.all([
           api("/api/jobs/applications/"),
           api("/api/jobs/saved/"),
           api("/api/cv/"),
+          api("/api/auth/me/").catch(() => null),
         ]);
         const apps  = await appsRes.json();
         const saved = await savedRes.json();
-        const cvs   = await cvRes.json();
+        const cv    = await cvRes.json();
         setApplications(Array.isArray(apps)  ? apps  : []);
         setSavedJobs(Array.isArray(saved) ? saved : []);
-        setCvList(Array.isArray(cvs)    ? cvs   : []);
+        // /api/cv/ returns a single object, not an array — wrap it
+        setCvList(cv && !cv.error ? [cv] : []);
+        if (userRes?.ok) setUser(await userRes.json());
       } catch (e) {
         if (e.message === "AUTH") { navigate("/login"); return; }
         setError("Failed to load data.");
@@ -255,10 +241,11 @@ export default function DashboardPage() {
           <div>
             <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", color: "#1d9e75", marginBottom: 4 }}>◈ DASHBOARD</div>
             <div style={{ fontFamily: heading, fontWeight: 900, fontSize: "clamp(1.6rem,3vw,2.2rem)", color: "#f3f6ff", lineHeight: 1 }}>
-              {user?.first_name ? `Welcome back, ${user.first_name}` : "My Dashboard"}
+              {user?.name ? `Welcome back, ${user.name}` : "My Dashboard"}
             </div>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <button className="db-nav-btn" onClick={() => navigate("/")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.4)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>← Home</button>
             <button className="db-nav-btn" onClick={() => navigate("/cv-analysis")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(29,158,117,0.12)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.28)", cursor: "pointer" }}>Upload CV →</button>
             <button className="db-nav-btn" onClick={() => navigate("/cv-maker")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.04)", color: "rgba(243,246,255,0.6)", border: "1px solid rgba(255,255,255,0.09)", cursor: "pointer" }}>Build CV →</button>
             <button className="db-nav-btn" onClick={logout} style={{ fontSize: 11, fontFamily: mono, padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.35)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>Log out</button>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 
 const API = "http://127.0.0.1:8000/api/chat/";
@@ -359,6 +360,7 @@ export default function CVMaker() {
   const [loading,  setLoading]  = useState(false);
   const [cvData,   setCvData]   = useState(null);
 
+  const routerNavigate = useNavigate(); // router navigation
   const [cssAccent, setCssAccent] = useState(PALETTE.apex.particle);
   const colorRef = useRef(new THREE.Color(PALETTE.apex.particle));
   const bottomRef = useRef(null);
@@ -381,7 +383,8 @@ export default function CVMaker() {
     setCssAccent(pal.particle);
   }, [tplIdx]);
 
-  const navigate = useCallback((dir) => {
+  // cycleTemplate: cycle through CV templates (NOT router navigation)
+  const cycleTemplate = useCallback((dir) => {
     setAnimDir(dir > 0 ? "right" : "left");
     setTplIdx(prev => (prev + dir + TEMPLATES.length) % TEMPLATES.length);
   }, []);
@@ -389,13 +392,13 @@ export default function CVMaker() {
   useEffect(() => {
     if (phase !== "pick") return;
     const h = (e) => {
-      if (e.key === "ArrowRight") navigate(1);
-      if (e.key === "ArrowLeft")  navigate(-1);
+      if (e.key === "ArrowRight") cycleTemplate(1);
+      if (e.key === "ArrowLeft")  cycleTemplate(-1);
       if (e.key === "Enter")      handleStart();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [phase, tplIdx, navigate]);
+  }, [phase, tplIdx, cycleTemplate]);
 
   /* ── handleStart — uses authHeaders() ── */
   async function handleStart() {
@@ -473,6 +476,17 @@ export default function CVMaker() {
           transition:"background 1.2s ease",
         }} />
         <Topbar accentColor={cssAccent}>
+          {/* ← Back to Home link */}
+          <button onClick={() => routerNavigate("/")} style={{
+            background:"none", border:"1px solid rgba(255,255,255,0.12)", cursor:"pointer",
+            padding:"5px 12px", borderRadius:7,
+            fontSize:11, fontFamily:"'DM Mono',monospace",
+            color:"rgba(255,255,255,0.45)", transition:"all 0.2s", marginLeft:4,
+          }}
+            onMouseEnter={e=>{e.currentTarget.style.color="#fff";e.currentTarget.style.borderColor="rgba(255,255,255,0.28)";}}
+            onMouseLeave={e=>{e.currentTarget.style.color="rgba(255,255,255,0.45)";e.currentTarget.style.borderColor="rgba(255,255,255,0.12)";}}>
+            ← Home
+          </button>
           <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8,
             fontFamily:"'DM Mono',monospace", fontSize:10, color:"rgba(255,255,255,0.22)" }}>
             <span style={{ width:6, height:6, borderRadius:"50%", background:cssAccent,
@@ -521,8 +535,8 @@ export default function CVMaker() {
                 onMouseEnter={e=>{ e.currentTarget.style.opacity="0.82"; e.currentTarget.style.transform="scale(1.04)"; }}
                 onMouseLeave={e=>{ e.currentTarget.style.opacity="1"; e.currentTarget.style.transform=""; }}
               >Use {tpl.label} →</button>
-              <ArrowBtn onClick={()=>navigate(-1)} label="Previous" accentColor={cssAccent}>←</ArrowBtn>
-              <ArrowBtn onClick={()=>navigate(1)}  label="Next"     accentColor={cssAccent}>→</ArrowBtn>
+              <ArrowBtn onClick={()=>cycleTemplate(-1)} label="Previous" accentColor={cssAccent}>←</ArrowBtn>
+              <ArrowBtn onClick={()=>cycleTemplate(1)}  label="Next"     accentColor={cssAccent}>→</ArrowBtn>
             </div>
             <div style={{ display:"flex", gap:7, marginTop:24, animation:"fadeUp 0.5s ease 0.2s both" }}>
               {TEMPLATES.map((t,i) => (
@@ -568,10 +582,10 @@ export default function CVMaker() {
               </div>
             </div>
             <div style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)" }}>
-              <ArrowBtn onClick={()=>navigate(-1)} label="Previous template" accentColor={cssAccent} size={38}>←</ArrowBtn>
+              <ArrowBtn onClick={()=>cycleTemplate(-1)} label="Previous template" accentColor={cssAccent} size={38}>←</ArrowBtn>
             </div>
             <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)" }}>
-              <ArrowBtn onClick={()=>navigate(1)} label="Next template" accentColor={cssAccent} size={38}>→</ArrowBtn>
+              <ArrowBtn onClick={()=>cycleTemplate(1)} label="Next template" accentColor={cssAccent} size={38}>→</ArrowBtn>
             </div>
           </div>
         </div>

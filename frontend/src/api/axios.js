@@ -23,6 +23,12 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
+
+    // Rate limited — surface a clean error message
+    if (error.response?.status === 429) {
+      return Promise.reject(new Error("Too many requests. Please wait a moment and try again."));
+    }
+
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       const refresh = localStorage.getItem("refresh_token");

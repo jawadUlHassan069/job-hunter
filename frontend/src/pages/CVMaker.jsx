@@ -359,12 +359,26 @@ export default function CVMaker() {
   const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [cvData,   setCvData]   = useState(null);
+  const [theme,    setTheme]    = useState("dark");
 
   const routerNavigate = useNavigate(); // router navigation
   const [cssAccent, setCssAccent] = useState(PALETTE.apex.particle);
   const colorRef = useRef(new THREE.Color(PALETTE.apex.particle));
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "dark";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  };
 
   useEffect(() => {
     const link = document.createElement("link"); link.rel="stylesheet"; link.href=FONT_HREF;
@@ -476,8 +490,8 @@ export default function CVMaker() {
           transition:"background 1.2s ease",
         }} />
         <Topbar accentColor={cssAccent}>
-          {/* ← Back to Home link */}
-          <button onClick={() => routerNavigate("/")} style={{
+          {/* ← Back to Dashboard */}
+          <button onClick={() => routerNavigate("/dashboard")} style={{
             background:"none", border:"1px solid rgba(255,255,255,0.12)", cursor:"pointer",
             padding:"5px 12px", borderRadius:7,
             fontSize:11, fontFamily:"'DM Mono',monospace",
@@ -485,8 +499,9 @@ export default function CVMaker() {
           }}
             onMouseEnter={e=>{e.currentTarget.style.color="#fff";e.currentTarget.style.borderColor="rgba(255,255,255,0.28)";}}
             onMouseLeave={e=>{e.currentTarget.style.color="rgba(255,255,255,0.45)";e.currentTarget.style.borderColor="rgba(255,255,255,0.12)";}}>
-            ← Home
+            ← Dashboard
           </button>
+          <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s", marginLeft: 8 }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
           <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8,
             fontFamily:"'DM Mono',monospace", fontSize:10, color:"rgba(255,255,255,0.22)" }}>
             <span style={{ width:6, height:6, borderRadius:"50%", background:cssAccent,
@@ -612,6 +627,7 @@ export default function CVMaker() {
             onMouseEnter={e=>e.currentTarget.style.color="#fff"}
             onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.3)"}
           >← Back</button>
+          <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s", marginLeft: 8 }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
           <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8,
             background:`${cssAccent}14`, padding:"6px 14px", borderRadius:100, fontSize:11,
             fontFamily:"'DM Mono',monospace", color:"rgba(255,255,255,0.5)",
@@ -703,6 +719,7 @@ export default function CVMaker() {
             onMouseEnter={e=>e.currentTarget.style.color="#fff"}
             onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.3)"}
           >← Edit</button>
+          <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s", marginLeft: 8 }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
           <div style={{ width:1, height:14, background:BORDER }}/>
           <button onClick={()=>{ setPhase("pick"); setMessages([]); setCvData(null); }}
             style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.3)",

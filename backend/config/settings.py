@@ -3,11 +3,8 @@ from datetime import timedelta
 from decouple import config, Csv
 import sys
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
-
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,6 +36,7 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_totp',
     'django_celery_beat',
+    'django_ratelimit',
 
     # our apps
     'auth_service',
@@ -93,16 +91,6 @@ DATABASES = {
     }
 }
 
-# ── REST Framework ─────────────────────────────────────
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-}
-
 # ── JWT ────────────────────────────────────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=config('ACCESS_TOKEN_LIFETIME_MINUTES', default=60,  cast=int)),
@@ -116,7 +104,30 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',   # Fix #8 — was missing
 ]
+
+# ── CSRF ───────────────────────────────────────────────
+# DRF with JWT auth does NOT use session/cookie auth so CSRF is not
+# enforced on our API views. These settings make that explicit and safe.
+CSRF_COOKIE_HTTPONLY   = False   # Allow JS to read CSRF token if ever needed
+CSRF_TRUSTED_ORIGINS   = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+]
+# Ensure SessionAuthentication is never accidentally used (it enforces CSRF)
+# JWT auth is the only authentication backend for the REST API
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # DO NOT add SessionAuthentication here — it would re-enable CSRF enforcement
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
 
 # ── 2FA ────────────────────────────────────────────────
 OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='JobHunter')
@@ -124,6 +135,15 @@ OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='JobHunter')
 # ── File uploads ───────────────────────────────────────
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# ── Cache (used by django-ratelimit for distributed rate limiting) ─
+# Uses Redis database 1 (Celery uses 0) to avoid key collisions
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
+    }
+}
 
 # ── Celery ─────────────────────────────────────────────
 CELERY_BROKER_URL      = config('REDIS_URL', default='redis://localhost:6379/0')

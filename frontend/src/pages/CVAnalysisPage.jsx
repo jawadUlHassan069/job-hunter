@@ -128,7 +128,7 @@ function ProcessingScreen({ stage }) {
       <div style={{ position: "relative", width: 88, height: 108, animation: "cv-float 3s ease infinite" }}>
         <div style={{
           width: "100%", height: "100%", borderRadius: 10,
-          background: "linear-gradient(135deg,var(--card-bg,#0d0f1a) 0%,rgba(13,16,26,0.95) 100%)",
+          background: "linear-gradient(135deg,#1a1f2e 0%,rgba(26,31,46,0.95) 100%)",
           border: "1px solid rgba(29,158,117,0.35)", padding: "14px 12px",
           display: "flex", flexDirection: "column", gap: 5, overflow: "hidden",
           boxShadow: "0 20px 60px rgba(0,0,0,0.4),0 0 40px rgba(29,158,117,0.12)",
@@ -138,7 +138,7 @@ function ProcessingScreen({ stage }) {
           ))}
           <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent,#1d9e75,transparent)", animation: "cv-scan 2.2s ease-in-out infinite" }} />
         </div>
-        <div style={{ position: "absolute", top: 0, right: 0, width: 20, height: 20, background: "var(--bg,#060816)", borderLeft: "1px solid rgba(29,158,117,0.3)", borderBottom: "1px solid rgba(29,158,117,0.3)", borderRadius: "0 10px 0 7px" }} />
+        <div style={{ position: "absolute", top: 0, right: 0, width: 20, height: 20, background: "#0f1419", borderLeft: "1px solid rgba(29,158,117,0.3)", borderBottom: "1px solid rgba(29,158,117,0.3)", borderRadius: "0 10px 0 7px" }} />
       </div>
       {/* Stages */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", maxWidth: 380 }}>
@@ -260,7 +260,7 @@ function JobCard({ job, idx, onGap, onSave, onApply, savedIds, appliedIds }) {
   const isSaved = savedIds.has(job.id), isApplied = appliedIds.has(job.id);
   const urgent = job.days_until_deadline != null && job.days_until_deadline <= 7;
   return (
-    <div className="cv-job-card" style={{ background: "var(--card-bg,#0d0f1a)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "20px 22px", animation: `cv-cardIn .5s ease ${0.06 * idx}s both` }}>
+    <div className="cv-job-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "20px 22px", animation: `cv-cardIn .5s ease ${0.06 * idx}s both` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: heading, fontWeight: 800, fontSize: 15, color: "#f3f6ff", marginBottom: 3, lineHeight: 1.3 }}>{job.title}</div>
@@ -303,8 +303,8 @@ function GapDrawer({ job, onClose }) {
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 40, backdropFilter: "blur(4px)" }} />
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(520px,100vw)", zIndex: 50, background: "var(--bg-secondary,#0d1020)", borderLeft: "1px solid rgba(29,158,117,0.2)", display: "flex", flexDirection: "column", overflow: "hidden", animation: "cv-drawer .35s cubic-bezier(0.22,1,0.36,1)", boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
-        <div style={{ padding: "22px 24px 18px", borderBottom: "1px solid rgba(255,255,255,0.07)", background: "var(--card-bg,#0d0f1a)", flexShrink: 0 }}>
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(520px,100vw)", zIndex: 50, background: "#0f1419", borderLeft: "1px solid rgba(29,158,117,0.2)", display: "flex", flexDirection: "column", overflow: "hidden", animation: "cv-drawer .35s cubic-bezier(0.22,1,0.36,1)", boxShadow: "-20px 0 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ padding: "22px 24px 18px", borderBottom: "1px solid rgba(255,255,255,0.07)", background: "#1a1f2e", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
               <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1d9e75", marginBottom: 10 }}>◈ Skill Gap Analysis</div>
@@ -403,7 +403,21 @@ export default function CVAnalysisPage() {
   const [error, setError] = useState(null);
   const [fileName, setFileName] = useState("");
   const [filter, setFilter] = useState("all");
+  const [theme, setTheme] = useState("dark");
   const jobsRef = useRef(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "dark";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  };
 
   useEffect(() => {
     if (document.getElementById("cv-page-css")) return;
@@ -463,7 +477,7 @@ export default function CVAnalysisPage() {
   const displayJobs = jobs.filter(j => filter === "soon" ? j.days_until_deadline != null && j.days_until_deadline <= 7 : filter === "saved" ? savedIds.has(j.id) : true);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg,#060816)", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "#0f1419", position: "relative", overflow: "hidden" }}>
       {/* Ambient BG */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.025, backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 70% 50% at 50% 0%,rgba(29,158,117,0.12) 0%,transparent 65%)" }} />
@@ -471,7 +485,10 @@ export default function CVAnalysisPage() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: "0 24px 80px" }}>
         {/* Header */}
         <div style={{ padding: "80px 0 44px", borderBottom: "1px solid rgba(255,255,255,0.07)", marginBottom: 48 }}>
-          <button onClick={() => navigate("/")} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(243,246,255,0.45)", fontSize: 11, fontFamily: mono, padding: "5px 14px", borderRadius: 8, cursor: "pointer", marginBottom: 28, display: "inline-flex", alignItems: "center", gap: 6, transition: "all .2s" }} onMouseEnter={e => { e.currentTarget.style.color = "#f3f6ff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }} onMouseLeave={e => { e.currentTarget.style.color = "rgba(243,246,255,0.45)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}>← Back to Home</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
+            <button onClick={() => navigate("/dashboard")} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(243,246,255,0.45)", fontSize: 11, fontFamily: mono, padding: "5px 14px", borderRadius: 8, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, transition: "all .2s" }} onMouseEnter={e => { e.currentTarget.style.color = "#f3f6ff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }} onMouseLeave={e => { e.currentTarget.style.color = "rgba(243,246,255,0.45)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}>← Dashboard</button>
+            <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
+          </div>
           <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1d9e75", marginBottom: 14 }}>◈ CV Analysis · Job Matching</div>
           <h1 style={{ fontFamily: heading, fontWeight: 900, fontSize: "clamp(2.4rem,5vw,4rem)", lineHeight: 0.92, letterSpacing: "-0.04em", color: "#f3f6ff", marginBottom: 16 }}>
             SCAN YOUR CV.<br /><span style={{ WebkitTextStroke: "1.5px rgba(255,255,255,0.14)", color: "transparent" }}>FIND YOUR MATCH.</span>
@@ -517,7 +534,7 @@ export default function CVAnalysisPage() {
                 <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1d9e75" }}>◈ ATS Report</div>
                 <div style={{ marginLeft: "auto", fontSize: 10, fontFamily: mono, color: "rgba(255,255,255,0.2)", padding: "3px 10px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.07)" }}>{fileName}</div>
               </div>
-              <div style={{ background: "var(--card-bg,#0d0f1a)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 28 }}>
+              <div style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: 28 }}>
                 {cvData.parsed?.name && (
                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: "rgba(29,158,117,0.12)", border: "1px solid rgba(29,158,117,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: heading, fontWeight: 900, fontSize: 16, color: "#1d9e75" }}>{cvData.parsed.name.charAt(0).toUpperCase()}</div>

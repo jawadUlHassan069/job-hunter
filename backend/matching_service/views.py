@@ -60,10 +60,11 @@ class MatchJobsView(APIView):
             job = jobs_map.get(s['job_id'])
             if job:
                 job_data = JobSerializer(job).data
-                # convert 0-1 float → 0-100 integer for frontend
-                raw_sim  = s.get('similarity', 0)
-                job_data['match_score'] = round(raw_sim * 100)
-                job_data['similarity_score'] = raw_sim
+                # get_similarity_scores() already returns 0-100 percentage
+                # DO NOT multiply by 100 again — that would give e.g. 9400%
+                match_pct = s.get('similarity', 0)   # already 0-100
+                job_data['match_score']      = round(match_pct)
+                job_data['similarity_score'] = round(match_pct / 100, 4)  # store as 0-1 for reference
                 results.append(job_data)
 
         return Response(results)

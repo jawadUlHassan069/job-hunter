@@ -4,6 +4,8 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -15,6 +17,11 @@ from .serializers import RegisterSerializer, UserSerializer
 
 User = get_user_model()
 
+# Hardcoded bcrypt-style dummy hash used for constant-time login checks.
+# Prevents timing-based email enumeration: we always run check_password
+# even when the email doesn't exist so response time is identical.
+_DUMMY_HASH = 'pbkdf2_sha256$600000$dummysalt$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -24,6 +31,11 @@ def get_tokens_for_user(user):
     }
 
 
+# ── Fix #3: Rate limiting ──────────────────────────────────────────────────────
+# Login: 5 attempts per minute per IP, 10 per minute per email
+# Register: 3 new accounts per hour per IP
+@method_decorator(ratelimit(key='ip',    rate='5/m',  method='POST', block=True), name='dispatch')
+@method_decorator(ratelimit(key='post:email', rate='10/m', method='POST', block=True), name='dispatch')
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -39,11 +51,13 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(ratelimit(key='ip',    rate='10/m',  method='POST', block=True), name='dispatch')
+@method_decorator(ratelimit(key='post:email', rate='5/m', method='POST', block=True), name='dispatch')
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        email    = request.data.get('email', '').strip()
+        email    = request.data.get('email', '').strip().lower()
         password = request.data.get('password', '')
 
         if not email or not password:
@@ -52,15 +66,22 @@ class LoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # ── Fix #2: Constant-time authentication ──────────────────────────────
+        # Always perform the password check regardless of whether the user
+        # exists — this prevents timing-based email enumeration attacks.
         try:
             user = User.objects.get(email=email)
+            password_correct = user.check_password(password)
         except User.DoesNotExist:
+            # Run a dummy check so response time is identical to a bad password
+            from django.contrib.auth.hashers import check_password
+            check_password(password, _DUMMY_HASH)
             return Response(
                 {'error': 'Invalid credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        if not user.check_password(password):
+        if not password_correct:
             return Response(
                 {'error': 'Invalid credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -72,7 +93,7 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # if 2FA enabled tell frontend to show OTP screen
+        # If 2FA enabled, tell frontend to show OTP screen
         if user.is_2fa_enabled:
             return Response({
                 'requires_2fa': True,
@@ -90,7 +111,7 @@ class Setup2FAView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # delete existing unconfirmed device
+        # Delete existing unconfirmed device
         TOTPDevice.objects.filter(user=request.user, confirmed=False).delete()
 
         device = TOTPDevice.objects.create(
@@ -126,7 +147,7 @@ class Setup2FAView(APIView):
             )
 
         if device.verify_token(code):
-            device.confirmed       = True
+            device.confirmed            = True
             device.save()
             request.user.is_2fa_enabled = True
             request.user.save()
@@ -138,6 +159,7 @@ class Setup2FAView(APIView):
         )
 
 
+@method_decorator(ratelimit(key='ip', rate='10/m', method='POST', block=True), name='dispatch')
 class Verify2FAView(APIView):
     permission_classes = [AllowAny]
 

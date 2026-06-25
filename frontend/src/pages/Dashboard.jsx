@@ -76,13 +76,13 @@ function StatCard({ icon, label, value, accent = "#1d9e75", delay = 0 }) {
     return () => clearInterval(t);
   }, [value]);
   return (
-    <div className="db-stat-card" style={{ background: "var(--card-bg,#0d0f1a)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "20px 22px", animation: `db-fadeUp .5s ease ${delay}s both` }}>
+    <div className="db-stat-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "20px 22px", animation: `db-fadeUp .5s ease ${delay}s both` }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}18`, border: `1px solid ${accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{icon}</div>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}25`, border: `1px solid ${accent}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{icon}</div>
         <div style={{ width: 5, height: 5, borderRadius: "50%", background: accent, animation: "db-pulse 2.5s infinite" }} />
       </div>
       <div style={{ fontFamily: heading, fontWeight: 900, fontSize: 28, color: "#f3f6ff", lineHeight: 1, marginBottom: 4, animation: `db-countUp .6s ease ${delay + 0.1}s both` }}>{typeof value === "string" && !parseInt(value) ? value : displayed}</div>
-      <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.38)", letterSpacing: "0.05em" }}>{label}</div>
+      <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.5)", letterSpacing: "0.05em" }}>{label}</div>
     </div>
   );
 }
@@ -91,25 +91,25 @@ function AppCard({ app, idx, onStatusChange }) {
   const [open, setOpen] = useState(false);
   const job = app.job || {};
   return (
-    <div className="db-app-card" style={{ background: "var(--card-bg,#0d0f1a)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 18px", animation: `db-cardIn .4s ease ${idx * 0.05}s both` }}>
+    <div className="db-app-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "16px 18px", animation: `db-cardIn .4s ease ${idx * 0.05}s both` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: heading, fontWeight: 700, fontSize: 14, color: "#f3f6ff", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.title || "Unknown Role"}</div>
-          <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.4)" }}>{job.company || "—"} {job.location ? `· ${job.location}` : ""}</div>
+          <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.55)" }}>{job.company || "—"} {job.location ? `· ${job.location}` : ""}</div>
         </div>
         <StatusBadge status={app.status || "applied"} />
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ fontSize: 9, fontFamily: mono, color: "rgba(243,246,255,0.25)" }}>Applied {app.applied_at ? new Date(app.applied_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</div>
+        <div style={{ fontSize: 9, fontFamily: mono, color: "rgba(243,246,255,0.4)" }}>Applied {app.applied_at ? new Date(app.applied_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</div>
         <div style={{ display: "flex", gap: 4 }}>
-          <button onClick={() => setOpen(!open)} style={{ fontSize: 9, fontFamily: mono, padding: "3px 8px", borderRadius: 6, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.4)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>Update ▾</button>
-          {job.url && <a href={job.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 9, fontFamily: mono, padding: "3px 8px", borderRadius: 6, background: "rgba(29,158,117,0.10)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.22)", textDecoration: "none" }}>↗</a>}
+          <button onClick={() => setOpen(!open)} style={{ fontSize: 9, fontFamily: mono, padding: "3px 8px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.6)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>Update ▾</button>
+          {job.url && <a href={job.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 9, fontFamily: mono, padding: "3px 8px", borderRadius: 6, background: "rgba(29,158,117,0.15)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.3)", textDecoration: "none" }}>↗</a>}
         </div>
       </div>
       {open && (
-        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", flexWrap: "wrap", gap: 5 }}>
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.10)", display: "flex", flexWrap: "wrap", gap: 5 }}>
           {STATUSES.map(s => (
-            <button key={s} className="db-status-btn" onClick={() => { onStatusChange(app.id, s); setOpen(false); }} style={{ fontSize: 9, fontFamily: mono, padding: "3px 9px", borderRadius: 6, background: app.status === s ? `${STATUS_COLORS[s].bg}` : "rgba(255,255,255,0.03)", color: app.status === s ? STATUS_COLORS[s].text : "rgba(243,246,255,0.4)", border: `1px solid ${app.status === s ? STATUS_COLORS[s].border : "rgba(255,255,255,0.07)"}`, cursor: "pointer" }}>{s}</button>
+            <button key={s} className="db-status-btn" onClick={() => { onStatusChange(app.id, s); setOpen(false); }} style={{ fontSize: 9, fontFamily: mono, padding: "3px 9px", borderRadius: 6, background: app.status === s ? `${STATUS_COLORS[s].bg}` : "rgba(255,255,255,0.06)", color: app.status === s ? STATUS_COLORS[s].text : "rgba(243,246,255,0.55)", border: `1px solid ${app.status === s ? STATUS_COLORS[s].border : "rgba(255,255,255,0.12)"}`, cursor: "pointer" }}>{s}</button>
           ))}
         </div>
       )}
@@ -120,24 +120,24 @@ function AppCard({ app, idx, onStatusChange }) {
 function SavedJobCard({ item, idx, onRemove }) {
   const job = item.job || {};
   return (
-    <div className="db-app-card" style={{ background: "var(--card-bg,#0d0f1a)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 18px", animation: `db-cardIn .4s ease ${idx * 0.05}s both` }}>
+    <div className="db-app-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "16px 18px", animation: `db-cardIn .4s ease ${idx * 0.05}s both` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: heading, fontWeight: 700, fontSize: 14, color: "#f3f6ff", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.title || "Unknown Role"}</div>
-          <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.4)" }}>{job.company || "—"} {job.location ? `· ${job.location}` : ""}</div>
+          <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.55)" }}>{job.company || "—"} {job.location ? `· ${job.location}` : ""}</div>
         </div>
         {job.days_until_deadline != null && job.days_until_deadline <= 7 && (
-          <span style={{ fontSize: 9, fontFamily: mono, padding: "2px 8px", borderRadius: 100, background: "rgba(239,68,68,0.10)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.28)", flexShrink: 0, marginLeft: 8 }}>⚠ {job.days_until_deadline}d</span>
+          <span style={{ fontSize: 9, fontFamily: mono, padding: "2px 8px", borderRadius: 100, background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.35)", flexShrink: 0, marginLeft: 8 }}>⚠ {job.days_until_deadline}d</span>
         )}
       </div>
       {job.required_skills?.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-          {job.required_skills.slice(0, 5).map((sk, i) => <span key={i} style={{ fontSize: 8, fontFamily: mono, padding: "2px 6px", borderRadius: 5, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{sk}</span>)}
+          {job.required_skills.slice(0, 5).map((sk, i) => <span key={i} style={{ fontSize: 8, fontFamily: mono, padding: "2px 6px", borderRadius: 5, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.5)", border: "1px solid rgba(255,255,255,0.10)" }}>{sk}</span>)}
         </div>
       )}
       <div style={{ display: "flex", gap: 6 }}>
         {job.url && <a href={job.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 9, fontFamily: mono, padding: "4px 12px", borderRadius: 7, background: "#1d9e75", color: "#fff", border: "none", textDecoration: "none", fontWeight: 700 }}>Apply →</a>}
-        <button onClick={() => onRemove(item.id)} style={{ fontSize: 9, fontFamily: mono, padding: "4px 10px", borderRadius: 7, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.35)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>✕ Remove</button>
+        <button onClick={() => onRemove(item.id)} style={{ fontSize: 9, fontFamily: mono, padding: "4px 10px", borderRadius: 7, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.5)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>✕ Remove</button>
       </div>
     </div>
   );
@@ -154,6 +154,20 @@ export default function DashboardPage() {
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "dark";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  };
 
   useEffect(() => {
     if (document.getElementById("db-page-css")) return;
@@ -231,24 +245,24 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg,#060816)", position: "relative" }}>
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 50% 35% at 80% 0%,rgba(29,158,117,0.08) 0%,transparent 55%)" }} />
+    <div style={{ minHeight: "100vh", background: "#0f1419", position: "relative" }}>
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 50% 35% at 80% 0%,rgba(29,158,117,0.12) 0%,transparent 55%)" }} />
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 24px 80px" }}>
 
         {/* Header */}
-        <div style={{ padding: "32px 0 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", borderBottom: "1px solid rgba(255,255,255,0.07)", marginBottom: 32 }}>
+        <div style={{ padding: "32px 0 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", borderBottom: "1px solid rgba(255,255,255,0.12)", marginBottom: 32 }}>
           <div>
             <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", color: "#1d9e75", marginBottom: 4 }}>◈ DASHBOARD</div>
             <div style={{ fontFamily: heading, fontWeight: 900, fontSize: "clamp(1.6rem,3vw,2.2rem)", color: "#f3f6ff", lineHeight: 1 }}>
               {user?.name ? `Welcome back, ${user.name}` : "My Dashboard"}
             </div>
           </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            <button className="db-nav-btn" onClick={() => navigate("/")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.4)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>← Home</button>
-            <button className="db-nav-btn" onClick={() => navigate("/cv-analysis")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(29,158,117,0.12)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.28)", cursor: "pointer" }}>Upload CV →</button>
-            <button className="db-nav-btn" onClick={() => navigate("/cv-maker")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.04)", color: "rgba(243,246,255,0.6)", border: "1px solid rgba(255,255,255,0.09)", cursor: "pointer" }}>Build CV →</button>
-            <button className="db-nav-btn" onClick={logout} style={{ fontSize: 11, fontFamily: mono, padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "rgba(243,246,255,0.35)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>Log out</button>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
+            <button className="db-nav-btn" onClick={() => navigate("/cv-analysis")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(29,158,117,0.18)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.35)", cursor: "pointer" }}>Upload CV →</button>
+            <button className="db-nav-btn" onClick={() => navigate("/cv-maker")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.7)", border: "1px solid rgba(255,255,255,0.14)", cursor: "pointer" }}>Build CV →</button>
+            <button className="db-nav-btn" onClick={logout} style={{ fontSize: 11, fontFamily: mono, padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.5)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>Log out</button>
           </div>
         </div>
 
@@ -262,18 +276,18 @@ export default function DashboardPage() {
         </div>
 
         {/* Pipeline */}
-        <div style={{ marginBottom: 40, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.07)", animation: "db-fadeUp .5s ease .2s both" }}>
-          <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", color: "rgba(243,246,255,0.3)", marginBottom: 14 }}>◈ APPLICATION PIPELINE</div>
+        <div style={{ marginBottom: 40, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.12)", animation: "db-fadeUp .5s ease .2s both" }}>
+          <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", color: "rgba(243,246,255,0.45)", marginBottom: 14 }}>◈ APPLICATION PIPELINE</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
             {STATUSES.map(s => {
               const c = STATUS_COLORS[s];
               const count = pipelineCounts[s] || 0;
               const pct = stats.total > 0 ? (count / stats.total) * 100 : 0;
               return (
-                <div key={s} onClick={() => { setStatusFilter(s); setTab("applications"); }} style={{ cursor: "pointer", padding: "14px 16px", borderRadius: 10, background: `${c.bg}`, border: `1px solid ${c.border}`, transition: "transform .2s,box-shadow .2s" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 6px 20px ${c.dot}18`; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
+                <div key={s} onClick={() => { setStatusFilter(s); setTab("applications"); }} style={{ cursor: "pointer", padding: "14px 16px", borderRadius: 10, background: `${c.bg}`, border: `1px solid ${c.border}`, transition: "transform .2s,box-shadow .2s" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 6px 20px ${c.dot}25`; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
                   <div style={{ fontFamily: heading, fontWeight: 900, fontSize: 24, color: c.dot, lineHeight: 1, marginBottom: 4 }}>{count}</div>
                   <div style={{ fontSize: 10, fontFamily: mono, color: c.text, letterSpacing: "0.08em" }}>{s.charAt(0).toUpperCase() + s.slice(1)}</div>
-                  <div style={{ marginTop: 8, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                  <div style={{ marginTop: 8, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
                     <div style={{ height: "100%", borderRadius: 2, background: c.dot, width: `${pct}%`, transition: "width .8s ease" }} />
                   </div>
                 </div>
@@ -283,10 +297,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: 0 }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: "1px solid rgba(255,255,255,0.12)", paddingBottom: 0 }}>
           {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} className="db-tab-btn" style={{ fontSize: 12, fontFamily: mono, padding: "10px 18px", background: "none", border: "none", cursor: "pointer", color: tab === t.key ? "#f3f6ff" : "rgba(243,246,255,0.35)", borderBottom: `2px solid ${tab === t.key ? "#1d9e75" : "transparent"}`, transition: "all .2s", marginBottom: -1 }}>
-              {t.label} {t.count > 0 && <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 5, background: tab === t.key ? "rgba(29,158,117,0.18)" : "rgba(255,255,255,0.05)", color: tab === t.key ? "#1d9e75" : "rgba(243,246,255,0.3)", marginLeft: 6 }}>{t.count}</span>}
+            <button key={t.key} onClick={() => setTab(t.key)} className="db-tab-btn" style={{ fontSize: 12, fontFamily: mono, padding: "10px 18px", background: "none", border: "none", cursor: "pointer", color: tab === t.key ? "#f3f6ff" : "rgba(243,246,255,0.5)", borderBottom: `2px solid ${tab === t.key ? "#1d9e75" : "transparent"}`, transition: "all .2s", marginBottom: -1 }}>
+              {t.label} {t.count > 0 && <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 5, background: tab === t.key ? "rgba(29,158,117,0.22)" : "rgba(255,255,255,0.08)", color: tab === t.key ? "#1d9e75" : "rgba(243,246,255,0.45)", marginLeft: 6 }}>{t.count}</span>}
             </button>
           ))}
         </div>
@@ -312,10 +326,10 @@ export default function DashboardPage() {
                 {/* Status filter pills */}
                 <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
                   {["all", ...STATUSES].map(s => {
-                    const c = s === "all" ? { bg: "rgba(255,255,255,0.06)", text: "rgba(243,246,255,0.6)", border: "rgba(255,255,255,0.12)", dot: "rgba(255,255,255,0.4)" } : STATUS_COLORS[s];
+                    const c = s === "all" ? { bg: "rgba(255,255,255,0.10)", text: "rgba(243,246,255,0.75)", border: "rgba(255,255,255,0.18)", dot: "rgba(255,255,255,0.5)" } : STATUS_COLORS[s];
                     const active = statusFilter === s;
                     return (
-                      <button key={s} onClick={() => setStatusFilter(s)} style={{ fontSize: 10, fontFamily: mono, padding: "5px 12px", borderRadius: 8, cursor: "pointer", background: active ? c.bg : "rgba(255,255,255,0.02)", color: active ? (s === "all" ? "#f3f6ff" : c.text) : "rgba(243,246,255,0.35)", border: `1px solid ${active ? c.border : "rgba(255,255,255,0.06)"}`, transition: "all .15s" }}>
+                      <button key={s} onClick={() => setStatusFilter(s)} style={{ fontSize: 10, fontFamily: mono, padding: "5px 12px", borderRadius: 8, cursor: "pointer", background: active ? c.bg : "rgba(255,255,255,0.04)", color: active ? (s === "all" ? "#f3f6ff" : c.text) : "rgba(243,246,255,0.5)", border: `1px solid ${active ? c.border : "rgba(255,255,255,0.10)"}`, transition: "all .15s" }}>
                         {s === "all" ? `All (${applications.length})` : `${s.charAt(0).toUpperCase() + s.slice(1)} (${pipelineCounts[s] || 0})`}
                       </button>
                     );
@@ -349,21 +363,21 @@ export default function DashboardPage() {
                   ? <Empty icon="📄" title="No CVs uploaded" sub="Upload your CV to get ATS scores and job matches" action={{ label: "Upload CV →", fn: () => navigate("/cv-analysis") }} />
                   : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 12 }}>
                       {cvList.map((cv, i) => (
-                        <div key={cv.id} className="db-app-card" style={{ background: "var(--card-bg,#0d0f1a)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "18px 20px", animation: `db-cardIn .4s ease ${i * 0.05}s both` }}>
+                        <div key={cv.id} className="db-app-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "18px 20px", animation: `db-cardIn .4s ease ${i * 0.05}s both` }}>
                           <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(29,158,117,0.12)", border: "1px solid rgba(29,158,117,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>📄</div>
+                            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(29,158,117,0.18)", border: "1px solid rgba(29,158,117,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>📄</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontFamily: heading, fontWeight: 700, fontSize: 13, color: "#f3f6ff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cv.original_filename || cv.file_name || `CV #${cv.id}`}</div>
-                              <div style={{ fontSize: 9, fontFamily: mono, color: "rgba(243,246,255,0.3)", marginTop: 2 }}>{cv.uploaded_at ? new Date(cv.uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</div>
+                              <div style={{ fontSize: 9, fontFamily: mono, color: "rgba(243,246,255,0.45)", marginTop: 2 }}>{cv.uploaded_at ? new Date(cv.uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</div>
                             </div>
                           </div>
                           {cv.parsed?.skills?.length > 0 && (
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-                              {cv.parsed.skills.slice(0, 6).map((sk, j) => <span key={j} style={{ fontSize: 8, fontFamily: mono, padding: "2px 6px", borderRadius: 5, background: "rgba(29,158,117,0.09)", color: "rgba(29,158,117,0.8)", border: "1px solid rgba(29,158,117,0.2)" }}>{sk}</span>)}
-                              {cv.parsed.skills.length > 6 && <span style={{ fontSize: 8, fontFamily: mono, color: "rgba(255,255,255,0.2)", padding: "2px 4px" }}>+{cv.parsed.skills.length - 6}</span>}
+                              {cv.parsed.skills.slice(0, 6).map((sk, j) => <span key={j} style={{ fontSize: 8, fontFamily: mono, padding: "2px 6px", borderRadius: 5, background: "rgba(29,158,117,0.12)", color: "rgba(29,158,117,0.9)", border: "1px solid rgba(29,158,117,0.28)" }}>{sk}</span>)}
+                              {cv.parsed.skills.length > 6 && <span style={{ fontSize: 8, fontFamily: mono, color: "rgba(255,255,255,0.3)", padding: "2px 4px" }}>+{cv.parsed.skills.length - 6}</span>}
                             </div>
                           )}
-                          <button onClick={() => navigate("/cv-analysis")} style={{ width: "100%", fontSize: 10, fontFamily: mono, padding: "7px 0", borderRadius: 8, background: "rgba(29,158,117,0.10)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.22)", cursor: "pointer", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(29,158,117,0.18)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(29,158,117,0.10)"}>Re-run Analysis →</button>
+                          <button onClick={() => navigate("/cv-analysis")} style={{ width: "100%", fontSize: 10, fontFamily: mono, padding: "7px 0", borderRadius: 8, background: "rgba(29,158,117,0.15)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.3)", cursor: "pointer", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(29,158,117,0.22)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(29,158,117,0.15)"}>Re-run Analysis →</button>
                         </div>
                       ))}
                     </div>
@@ -379,10 +393,10 @@ export default function DashboardPage() {
 
 function Empty({ icon, title, sub, action }) {
   return (
-    <div style={{ padding: "60px 24px", textAlign: "center", borderRadius: 16, border: "1px dashed rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.01)", animation: "db-fadeIn .5s ease" }}>
-      <div style={{ fontSize: 36, marginBottom: 14, opacity: 0.3 }}>{icon}</div>
-      <div style={{ fontFamily: heading, fontWeight: 800, fontSize: 17, color: "rgba(243,246,255,0.45)", marginBottom: 8 }}>{title}</div>
-      <div style={{ fontSize: 11, fontFamily: mono, color: "rgba(243,246,255,0.25)", marginBottom: 20, maxWidth: 320, margin: "0 auto 20px" }}>{sub}</div>
+    <div style={{ padding: "60px 24px", textAlign: "center", borderRadius: 16, border: "1px dashed rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.02)", animation: "db-fadeIn .5s ease" }}>
+      <div style={{ fontSize: 36, marginBottom: 14, opacity: 0.4 }}>{icon}</div>
+      <div style={{ fontFamily: heading, fontWeight: 800, fontSize: 17, color: "rgba(243,246,255,0.6)", marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: 11, fontFamily: mono, color: "rgba(243,246,255,0.4)", marginBottom: 20, maxWidth: 320, margin: "0 auto 20px" }}>{sub}</div>
       {action && <button onClick={action.fn} style={{ padding: "10px 24px", borderRadius: 100, background: "#1d9e75", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontFamily: mono, fontWeight: 700 }}>{action.label}</button>}
     </div>
   );

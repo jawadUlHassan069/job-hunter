@@ -13,10 +13,17 @@ export default function Landing() {
   const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
+    // If user is logged in, redirect to dashboard
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
     const saved = localStorage.getItem("theme") || "dark";
     setTheme(saved);
     document.documentElement.setAttribute("data-theme", saved);
-  }, []);
+  }, [navigate]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";

@@ -31,6 +31,7 @@ const otpExtraStyle = {
 function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -39,6 +40,7 @@ function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
     try {
       const res  = await fetch(`${BASE}/api/auth/login/`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password}) })
       const data = await res.json()
+      if (res.status === 429) { setError('Too many attempts. Please wait a minute and try again.'); return }
       if (!res.ok) { setError(data.error||data.detail||'Invalid credentials'); return }
       if (data.requires_2fa) onRequires2FA(data.user_id)
       else onSuccess(data)
@@ -53,9 +55,12 @@ function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
         <label style={labelStyle}>Email</label>
         <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required className="auth-input" placeholder="you@example.com" />
       </div>
-      <div>
+      <div style={{position:'relative'}}>
         <label style={labelStyle}>Password</label>
-        <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required className="auth-input" placeholder="••••••••" />
+        <input type={showPassword ? 'text' : 'password'} value={password} onChange={e=>setPassword(e.target.value)} required className="auth-input" placeholder="••••••••" style={{paddingRight:'40px'}} />
+        <button type="button" onClick={()=>setShowPassword(!showPassword)} style={{position:'absolute',right:'10px',top:'30px',background:'none',border:'none',cursor:'pointer',fontSize:'18px',color:'rgba(0,0,0,0.4)',padding:'4px 6px',display:'flex',alignItems:'center',transition:'color 0.2s'}} onMouseEnter={e=>e.currentTarget.style.color='rgba(0,0,0,0.7)'} onMouseLeave={e=>e.currentTarget.style.color='rgba(0,0,0,0.4)'}>
+          {showPassword ? '👁️' : '👁️‍🗨️'}
+        </button>
       </div>
       <button type="submit" disabled={loading} style={{width:'100%',padding:'12px',background:ACCENT,color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer',transition:'opacity .15s',opacity:loading?0.7:1}}>
         {loading ? 'Signing in…' : 'Sign In'}
@@ -73,15 +78,40 @@ function RegisterForm({ onSwitch, onSuccess }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const submit = async (e) => {
-    e.preventDefault(); setLoading(true); setError('')
+    e.preventDefault(); setLoading(true); setError(''); setFieldErrors({})
     try {
       const res  = await fetch(`${BASE}/api/auth/register/`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,password}) })
       const data = await res.json()
-      if (!res.ok) { setError(data.error||data.detail||'Registration failed'); return }
+      if (!res.ok) {
+        if (res.status === 429) { setError('Too many attempts. Please wait a minute and try again.'); return }
+        // Collect all field errors
+        const errors = {}
+        if (data.email?.[0]) errors.email = data.email[0]
+        if (data.name?.[0]) errors.name = data.name[0]
+        if (data.password?.[0]) errors.password = data.password[0]
+        
+        // Set field-specific errors for inline display
+        setFieldErrors(errors)
+        
+        // Build a clear error message
+        if (Object.keys(errors).length > 0) {
+          const errorMessages = Object.entries(errors).map(([field, msg]) => 
+            `${field.charAt(0).toUpperCase() + field.slice(1)}: ${msg}`
+          ).join(' • ')
+          setError(errorMessages)
+        } else if (data.non_field_errors?.[0]) {
+          setError(data.non_field_errors[0])
+        } else {
+          setError(data.error || data.detail || 'Registration failed')
+        }
+        return
+      }
       onSuccess(data)
     } catch { setError('Network error. Please try again.') }
     finally { setLoading(false) }
@@ -92,15 +122,45 @@ function RegisterForm({ onSwitch, onSuccess }) {
       {error && <div style={{padding:'9px 12px',borderRadius:7,background:'rgba(239,68,68,0.07)',border:'1px solid rgba(239,68,68,0.18)',color:'#dc2626',fontSize:12}}>{error}</div>}
       <div>
         <label style={labelStyle}>Full Name</label>
-        <input type="text" value={name} onChange={e=>setName(e.target.value)} required className="auth-input" placeholder="John Doe" />
+        <input 
+          type="text" 
+          value={name} 
+          onChange={e=>{setName(e.target.value); if(fieldErrors.name) setFieldErrors(prev=>({...prev, name:null}))}} 
+          required 
+          className="auth-input" 
+          placeholder="John Doe" 
+          style={fieldErrors.name ? {borderColor:'#ef4444',borderWidth:'1.5px'} : {}}
+        />
+        {fieldErrors.name && <div style={{fontSize:10,color:'#ef4444',marginTop:3,fontFamily:mono}}>{fieldErrors.name}</div>}
       </div>
       <div>
         <label style={labelStyle}>Email</label>
-        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required className="auth-input" placeholder="you@example.com" />
+        <input 
+          type="email" 
+          value={email} 
+          onChange={e=>{setEmail(e.target.value); if(fieldErrors.email) setFieldErrors(prev=>({...prev, email:null}))}} 
+          required 
+          className="auth-input" 
+          placeholder="you@example.com" 
+          style={fieldErrors.email ? {borderColor:'#ef4444',borderWidth:'1.5px'} : {}}
+        />
+        {fieldErrors.email && <div style={{fontSize:10,color:'#ef4444',marginTop:3,fontFamily:mono}}>{fieldErrors.email}</div>}
       </div>
-      <div>
+      <div style={{position:'relative'}}>
         <label style={labelStyle}>Password</label>
-        <input type="password" value={password} onChange={e=>setPassword(e.target.value)} required className="auth-input" placeholder="Min. 8 characters" />
+        <input 
+          type={showPassword ? 'text' : 'password'} 
+          value={password} 
+          onChange={e=>{setPassword(e.target.value); if(fieldErrors.password) setFieldErrors(prev=>({...prev, password:null}))}} 
+          required 
+          className="auth-input" 
+          placeholder="Min. 8 characters" 
+          style={fieldErrors.password ? {paddingRight:'40px',borderColor:'#ef4444',borderWidth:'1.5px'} : {paddingRight:'40px'}}
+        />
+        <button type="button" onClick={()=>setShowPassword(!showPassword)} style={{position:'absolute',right:'10px',top:'30px',background:'none',border:'none',cursor:'pointer',fontSize:'18px',color:'rgba(0,0,0,0.4)',padding:'4px 6px',display:'flex',alignItems:'center',transition:'color 0.2s'}} onMouseEnter={e=>e.currentTarget.style.color='rgba(0,0,0,0.7)'} onMouseLeave={e=>e.currentTarget.style.color='rgba(0,0,0,0.4)'}>
+          {showPassword ? '👁️' : '👁️‍🗨️'}
+        </button>
+        {fieldErrors.password && <div style={{fontSize:10,color:'#ef4444',marginTop:3,fontFamily:mono}}>{fieldErrors.password}</div>}
       </div>
       <button type="submit" disabled={loading} style={{width:'100%',padding:'12px',background:ACCENT,color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer',transition:'opacity .15s',opacity:loading?0.7:1}}>
         {loading ? 'Creating account…' : 'Create Account'}

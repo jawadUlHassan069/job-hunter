@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 
-const API = "http://127.0.0.1:8000/api/chat/";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://job-hunter-du0n.onrender.com";
+const API = `${BASE_URL}/api/chat/`;
 
 /* ─── Auth helper ────────────────────────────────────────────────────── */
 const authHeaders = () => ({

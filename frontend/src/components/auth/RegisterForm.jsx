@@ -1,6 +1,8 @@
 // src/components/auth/RegisterForm.jsx
 import { useState } from 'react';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://job-hunter-du0n.onrender.com';
+
 export default function RegisterForm({ onSwitch, onSuccess }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -14,7 +16,7 @@ export default function RegisterForm({ onSwitch, onSuccess }) {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/register/', {
+      const res = await fetch(`${BASE_URL}/api/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

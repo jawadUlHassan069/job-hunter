@@ -5,6 +5,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://job-hunter-du0n.onrender.com';
+
 export default function Carousel() {
   const [current,   setCurrent]   = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -18,7 +20,7 @@ export default function Carousel() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/jobs/featured/');
+        const res = await fetch(`${BASE_URL}/api/jobs/featured/`);
         if (res.ok) {
           const data = await res.json();
           setJobs(data);

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const BASE   = 'http://localhost:8000'
+const BASE = import.meta.env.VITE_API_URL || 'https://job-hunter-du0n.onrender.com'
 const ACCENT = '#1d9e75'
 
 function isLoggedIn() {

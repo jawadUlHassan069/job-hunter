@@ -1,6 +1,8 @@
 // src/components/auth/LoginForm.jsx
 import { useState } from 'react';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://job-hunter-du0n.onrender.com';
+
 export default function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,7 +15,7 @@ export default function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/login/', {
+      const res = await fetch(`${BASE_URL}/api/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* ─── API helper ──────────────────────────────────────────── */
-const BASE = "http://localhost:8000";
+const BASE = import.meta.env.VITE_API_URL || "https://job-hunter-du0n.onrender.com";
 const api = async (path, opts = {}) => {
   const token = localStorage.getItem("access_token");
   const res = await fetch(`${BASE}${path}`, {

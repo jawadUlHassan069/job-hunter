@@ -119,6 +119,9 @@ function AppCard({ app, idx, onStatusChange }) {
 
 function SavedJobCard({ item, idx, onRemove }) {
   const job = item.job || {};
+  const daysLeft = job.days_until_deadline;
+  const isUrgent = daysLeft !== null && daysLeft !== undefined && daysLeft <= 7;
+  
   return (
     <div className="db-app-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "16px 18px", animation: `db-cardIn .4s ease ${idx * 0.05}s both` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
@@ -126,8 +129,10 @@ function SavedJobCard({ item, idx, onRemove }) {
           <div style={{ fontFamily: heading, fontWeight: 700, fontSize: 14, color: "#f3f6ff", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.title || "Unknown Role"}</div>
           <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.55)" }}>{job.company || "—"} {job.location ? `· ${job.location}` : ""}</div>
         </div>
-        {job.days_until_deadline != null && job.days_until_deadline <= 7 && (
-          <span style={{ fontSize: 9, fontFamily: mono, padding: "2px 8px", borderRadius: 100, background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.35)", flexShrink: 0, marginLeft: 8 }}>⚠ {job.days_until_deadline}d</span>
+        {isUrgent && (
+          <span style={{ fontSize: 9, fontFamily: mono, padding: "2px 8px", borderRadius: 100, background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.35)", flexShrink: 0, marginLeft: 8 }}>
+            ⚠ {daysLeft}d left
+          </span>
         )}
       </div>
       {job.required_skills?.length > 0 && (
@@ -143,18 +148,55 @@ function SavedJobCard({ item, idx, onRemove }) {
   );
 }
 
+function BrowseJobCard({ job, idx, onSave, onApply, savedIds, appliedIds }) {
+  const isSaved = savedIds.has(job.id), isApplied = appliedIds.has(job.id);
+  const daysLeft = job.days_until_deadline;
+  const isUrgent = daysLeft !== null && daysLeft !== undefined && daysLeft <= 7;
+  
+  return (
+    <div className="db-app-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "16px 18px", animation: `db-cardIn .4s ease ${idx * 0.05}s both` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: heading, fontWeight: 700, fontSize: 14, color: "#f3f6ff", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.title || "Unknown Role"}</div>
+          <div style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.55)" }}>{job.company || "—"} {job.location ? `· ${job.location}` : ""}</div>
+        </div>
+        {isUrgent && (
+          <span style={{ fontSize: 9, fontFamily: mono, padding: "2px 8px", borderRadius: 100, background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.35)", flexShrink: 0, marginLeft: 8 }}>
+            ⚠ {daysLeft}d left
+          </span>
+        )}
+      </div>
+      {job.description && <p style={{ fontSize: 10, fontFamily: mono, color: "rgba(243,246,255,0.35)", lineHeight: 1.6, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{job.description}</p>}
+      {job.required_skills?.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+          {job.required_skills.slice(0, 6).map((sk, i) => <span key={i} style={{ fontSize: 8, fontFamily: mono, padding: "2px 6px", borderRadius: 5, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.5)", border: "1px solid rgba(255,255,255,0.10)" }}>{sk}</span>)}
+          {job.required_skills.length > 6 && <span style={{ fontSize: 8, fontFamily: mono, color: "rgba(255,255,255,0.2)", padding: "2px 4px" }}>+{job.required_skills.length - 6}</span>}
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <button onClick={() => onSave(job)} style={{ width: 30, height: 30, borderRadius: 8, fontSize: 13, background: isSaved ? "rgba(29,158,117,0.12)" : "rgba(255,255,255,0.04)", color: isSaved ? "#1d9e75" : "rgba(243,246,255,0.4)", border: `1px solid ${isSaved ? "rgba(29,158,117,0.35)" : "rgba(255,255,255,0.07)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s" }}>{isSaved ? "★" : "☆"}</button>
+        <a href={job.url || "#"} target="_blank" rel="noopener noreferrer" onClick={e => { if (!job.url) e.preventDefault(); onApply(job); }} style={{ flex: 1, fontSize: 9, fontFamily: mono, padding: "6px 14px", borderRadius: 7, background: isApplied ? "rgba(255,255,255,0.04)" : "#1d9e75", color: isApplied ? "rgba(243,246,255,0.4)" : "#fff", border: "none", cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, transition: "all .2s" }}>{isApplied ? "Applied ✓" : "Apply →"}</a>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Page ───────────────────────────────────────────── */
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("applications"); // applications | saved | cv
+  const [tab, setTab] = useState("applications"); // applications | saved | cv | browse
   const [applications, setApplications] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
   const [cvList, setCvList] = useState([]);
+  const [browseJobs, setBrowseJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState("dark");
+  const [jobStats, setJobStats] = useState(null);
+  const [savedIds, setSavedIds] = useState(new Set());
+  const [appliedIds, setAppliedIds] = useState(new Set());
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") || "dark";
@@ -181,20 +223,39 @@ export default function DashboardPage() {
     const load = async () => {
       setLoading(true); setError(null);
       try {
-        const [appsRes, savedRes, cvRes, userRes] = await Promise.all([
+        const [appsRes, savedRes, cvRes, userRes, jobStatsRes, browseRes] = await Promise.all([
           api("/api/jobs/applications/"),
           api("/api/jobs/saved/"),
-          api("/api/cv/"),
+          api("/api/cv/").catch(() => ({ ok: false, json: async () => ({ error: "No CV" }) })),
           api("/api/auth/me/").catch(() => null),
+          api("/api/jobs/stats/").catch(() => null),
+          api("/api/jobs/").catch(() => ({ ok: false, json: async () => [] })),
         ]);
         const apps  = await appsRes.json();
         const saved = await savedRes.json();
         const cv    = await cvRes.json();
+        const browse = browseRes.ok ? await browseRes.json() : [];
         setApplications(Array.isArray(apps)  ? apps  : []);
         setSavedJobs(Array.isArray(saved) ? saved : []);
+        setBrowseJobs(Array.isArray(browse) ? browse : []);
+        
+        // Build savedIds and appliedIds Sets
+        if (Array.isArray(saved)) {
+          setSavedIds(new Set(saved.map(s => s.job.id)));
+        }
+        if (Array.isArray(apps)) {
+          setAppliedIds(new Set(apps.map(a => a.job.id)));
+        }
+        
         // /api/cv/ returns a single object, not an array — wrap it
-        setCvList(cv && !cv.error ? [cv] : []);
+        // Only add to list if CV exists and has valid data
+        if (cv && !cv.error && cv.cv) {
+          setCvList([cv.cv]);
+        } else {
+          setCvList([]);
+        }
         if (userRes?.ok) setUser(await userRes.json());
+        if (jobStatsRes?.ok) setJobStats(await jobStatsRes.json());
       } catch (e) {
         if (e.message === "AUTH") { navigate("/login"); return; }
         setError("Failed to load data.");
@@ -218,10 +279,43 @@ export default function DashboardPage() {
     } catch {}
   };
 
+  const saveJob = async (job) => {
+    if (savedIds.has(job.id)) {
+      // Remove from saved
+      try {
+        const r = await api("/api/jobs/saved/");
+        const list = await r.json();
+        const entry = list.find(s => s.job.id === job.id);
+        if (entry) {
+          await api(`/api/jobs/saved/${entry.id}/`, { method: "DELETE" });
+          setSavedIds(p => { const n = new Set(p); n.delete(job.id); return n; });
+          // Also remove from savedJobs list if viewing saved tab
+          setSavedJobs(prev => prev.filter(s => s.job.id !== job.id));
+        }
+      } catch {}
+    } else {
+      // Add to saved
+      try {
+        const res = await api("/api/jobs/saved/", { method: "POST", body: JSON.stringify({ job_id: job.id }) });
+        const saved = await res.json();
+        setSavedIds(p => new Set([...p, job.id]));
+        setSavedJobs(prev => [...prev, saved]);
+      } catch {}
+    }
+  };
+
+  const applyToJob = async (job) => {
+    if (appliedIds.has(job.id)) return;
+    try {
+      await api("/api/jobs/applications/", { method: "POST", body: JSON.stringify({ job_id: job.id }) });
+      setAppliedIds(p => new Set([...p, job.id]));
+    } catch {}
+  };
+
   const logout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    navigate("/login");
+    navigate("/");
   };
 
   /* Stats */
@@ -241,6 +335,7 @@ export default function DashboardPage() {
   const TABS = [
     { key: "applications", label: "Applications", count: applications.length },
     { key: "saved",        label: "Saved Jobs",   count: savedJobs.length },
+    { key: "browse",       label: "Browse Jobs",  count: browseJobs.length },
     { key: "cv",           label: "My CVs",       count: cvList.length },
   ];
 
@@ -274,6 +369,22 @@ export default function DashboardPage() {
           <StatCard icon="★"  label="Saved Jobs"         value={stats.saved}  accent="#a78bfa" delay={0.15} />
           <StatCard icon="📄" label="CVs Uploaded"       value={stats.cvs}    accent="#f59e0b" delay={0.20} />
         </div>
+
+        {/* Job database info */}
+        {jobStats && jobStats.total_jobs > 0 && (
+          <div style={{ marginBottom: 32, padding: "14px 18px", borderRadius: 12, background: "rgba(29,158,117,0.08)", border: "1px solid rgba(29,158,117,0.25)", animation: "db-fadeIn .5s ease .25s both", display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 18 }}>📊</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontFamily: heading, fontWeight: 700, color: "#1d9e75", marginBottom: 2 }}>
+                Job Database Status
+              </div>
+              <div style={{ fontSize: 9, fontFamily: mono, color: "rgba(243,246,255,0.5)" }}>
+                {jobStats.total_jobs} total jobs • {jobStats.recent_jobs_24h} added in last 24h
+                {jobStats.latest_scrape && ` • Last scrape: ${new Date(jobStats.latest_scrape).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pipeline */}
         <div style={{ marginBottom: 40, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.12)", animation: "db-fadeUp .5s ease .2s both" }}>
@@ -351,6 +462,18 @@ export default function DashboardPage() {
                   ? <Empty icon="★" title="No saved jobs" sub="Save interesting jobs while browsing matched results" action={{ label: "Find Jobs →", fn: () => navigate("/cv-analysis") }} />
                   : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 12 }}>
                       {savedJobs.map((s, i) => <SavedJobCard key={s.id} item={s} idx={i} onRemove={removeSaved} />)}
+                    </div>
+                }
+              </div>
+            )}
+
+            {/* BROWSE JOBS */}
+            {tab === "browse" && (
+              <div style={{ animation: "db-fadeIn .4s ease" }}>
+                {browseJobs.length === 0
+                  ? <Empty icon="🔍" title="No jobs available" sub="New jobs will appear here once they're scraped from job boards" />
+                  : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 12 }}>
+                      {browseJobs.map((job, i) => <BrowseJobCard key={job.id} job={job} idx={i} onSave={saveJob} onApply={applyToJob} savedIds={savedIds} appliedIds={appliedIds} />)}
                     </div>
                 }
               </div>

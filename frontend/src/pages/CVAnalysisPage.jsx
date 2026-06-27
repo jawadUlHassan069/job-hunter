@@ -259,6 +259,7 @@ function ATSPanel({ cvData, score = 72 }) {
 function JobCard({ job, idx, onGap, onSave, onApply, savedIds, appliedIds }) {
   const isSaved = savedIds.has(job.id), isApplied = appliedIds.has(job.id);
   const urgent = job.days_until_deadline != null && job.days_until_deadline <= 7;
+  const hasBreakdown = job.semantic_score != null && job.skill_score != null;
   return (
     <div className="cv-job-card" style={{ background: "#1a1f2e", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "20px 22px", animation: `cv-cardIn .5s ease ${0.06 * idx}s both` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
@@ -267,7 +268,14 @@ function JobCard({ job, idx, onGap, onSave, onApply, savedIds, appliedIds }) {
           <div style={{ fontSize: 11, fontFamily: mono, color: "rgba(243,246,255,0.45)" }}>{job.company} · {job.location}</div>
         </div>
         {job.match_score != null && (
-          <div style={{ flexShrink: 0, marginLeft: 12, padding: "4px 10px", borderRadius: 8, background: `${scoreColor(job.match_score)}14`, border: `1px solid ${scoreColor(job.match_score)}28`, fontSize: 11, fontFamily: mono, color: scoreColor(job.match_score), fontWeight: 700 }}>{job.match_score}%</div>
+          <div style={{ flexShrink: 0, marginLeft: 12 }}>
+            <div style={{ padding: "4px 10px", borderRadius: 8, background: `${scoreColor(job.match_score)}14`, border: `1px solid ${scoreColor(job.match_score)}28`, fontSize: 11, fontFamily: mono, color: scoreColor(job.match_score), fontWeight: 700, marginBottom: hasBreakdown ? 4 : 0 }}>{job.match_score}%</div>
+            {hasBreakdown && (
+              <div style={{ fontSize: 8, fontFamily: mono, color: "rgba(243,246,255,0.35)", textAlign: "right" }}>
+                Text: {job.semantic_score}% · Skills: {job.skill_score}%
+              </div>
+            )}
+          </div>
         )}
       </div>
       {job.description && <p style={{ fontSize: 11, fontFamily: mono, color: "rgba(243,246,255,0.35)", lineHeight: 1.7, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{job.description}</p>}

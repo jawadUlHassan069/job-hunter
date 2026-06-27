@@ -165,8 +165,9 @@ EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ── LLM ────────────────────────────────────────────────
-GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
-GROQ_API_KEY   = config('GROQ_API_KEY',   default='')
+GEMINI_API_KEY     = config('GEMINI_API_KEY',     default='')
+GROQ_API_KEY       = config('GROQ_API_KEY',       default='')
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
 
 # ── Sentry ─────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')

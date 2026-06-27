@@ -60,11 +60,29 @@ class MatchJobsView(APIView):
             job = jobs_map.get(s['job_id'])
             if job:
                 job_data = JobSerializer(job).data
-                # get_similarity_scores() already returns 0-100 percentage
-                # DO NOT multiply by 100 again — that would give e.g. 9400%
-                match_pct = s.get('similarity', 0)   # already 0-100
-                job_data['match_score']      = round(match_pct)
-                job_data['similarity_score'] = round(match_pct / 100, 4)  # store as 0-1 for reference
+                semantic_score = s.get('similarity', 0)  # 0-100
+                
+                # Calculate skill-based match using LLM
+                try:
+                    from skill_gap.analyzer import analyze_skill_gap
+                    job_dict = {
+                        'title': job.title,
+                        'description': job.description,
+                        'required_skills': job.required_skills,
+                    }
+                    skill_gap_result = analyze_skill_gap(cv.parsed, job_dict)
+                    skill_match_score = skill_gap_result.get('match_score', 0)
+                except Exception as e:
+                    print(f'Skill gap analysis failed for job {job.id}: {e}')
+                    skill_match_score = 0
+                
+                # Hybrid scoring: 30% semantic + 70% skills
+                hybrid_score = (semantic_score * 0.3) + (skill_match_score * 0.7)
+                
+                job_data['match_score'] = round(hybrid_score)
+                job_data['semantic_score'] = round(semantic_score)
+                job_data['skill_score'] = round(skill_match_score)
+                job_data['similarity_score'] = round(semantic_score / 100, 4)  # store as 0-1 for reference
                 results.append(job_data)
 
         return Response(results)

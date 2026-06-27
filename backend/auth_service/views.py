@@ -100,6 +100,9 @@ class LoginView(APIView):
                 'user_id':      user.id,
             }, status=status.HTTP_200_OK)
 
+        # Job scraping is handled by periodic Celery Beat task (daily at 2 AM)
+        # Login-triggered scraping removed to prevent UI blocking when Celery runs in eager mode
+
         tokens = get_tokens_for_user(user)
         return Response({
             'user':   UserSerializer(user).data,
@@ -183,6 +186,9 @@ class Verify2FAView(APIView):
             )
 
         if device.verify_token(code):
+            # Job scraping is handled by periodic Celery Beat task (daily at 2 AM)
+            # Login-triggered scraping removed to prevent UI blocking when Celery runs in eager mode
+            
             tokens = get_tokens_for_user(user)
             return Response({
                 'user':   UserSerializer(user).data,

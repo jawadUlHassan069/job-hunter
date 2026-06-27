@@ -75,6 +75,7 @@ function LoginForm({ onSwitch, onRequires2FA, onSuccess }) {
 
 /* ── Register Form ── */
 function RegisterForm({ onSwitch, onSuccess }) {
+  const mono = "'JetBrains Mono', monospace";  // Add missing constant
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -88,6 +89,9 @@ function RegisterForm({ onSwitch, onSuccess }) {
     try {
       const res  = await fetch(`${BASE}/api/auth/register/`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,password}) })
       const data = await res.json()
+      
+      console.log('Register response:', { status: res.status, data });  // Debug log
+      
       if (!res.ok) {
         if (res.status === 429) { setError('Too many attempts. Please wait a minute and try again.'); return }
         // Collect all field errors
@@ -113,7 +117,10 @@ function RegisterForm({ onSwitch, onSuccess }) {
         return
       }
       onSuccess(data)
-    } catch { setError('Network error. Please try again.') }
+    } catch (err) { 
+      console.error('Register error:', err);  // Debug log
+      setError('Network error. Please try again.') 
+    }
     finally { setLoading(false) }
   }
 

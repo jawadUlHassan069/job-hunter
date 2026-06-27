@@ -1,15 +1,11 @@
 import json
-import time
-from google import genai
-from django.conf import settings
-
-
-def get_gemini_client():
-    return genai.Client(api_key=settings.GEMINI_API_KEY)
+from pathlib import Path
+import fitz  # PyMuPDF
+from utils.llm_client import call_llm_json
 
 
 def extract_text_from_pdf(file_path: str) -> str:
-    import fitz
+    """Extract text from PDF using PyMuPDF"""
     doc  = fitz.open(file_path)
     text = ''
     for page in doc:
@@ -19,8 +15,11 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 
 def parse_cv_with_llm(raw_text: str) -> dict:
-    client = get_gemini_client()
-
+    """
+    Parse CV using multi-model LLM client with automatic fallback.
+    Tries Groq → OpenRouter → Gemini until one succeeds.
+    """
+    
     prompt = f"""
 You are a CV parser. Extract structured information from the CV text below.
 Return ONLY a valid JSON object. No explanation. No markdown. No code blocks.
@@ -56,27 +55,9 @@ Extract these exact fields:
 CV Text:
 {raw_text[:4000]}
 """
-
-    # retry with backoff on quota/503 errors
-    for attempt in range(5):
-        try:
-            response      = client.models.generate_content(
-                model    = 'models/gemini-2.0-flash-lite',
-                contents = prompt,
-            )
-            response_text = response.text.strip()
-            if response_text.startswith('```'):
-                lines         = response_text.split('\n')
-                response_text = '\n'.join(lines[1:-1])
-            return json.loads(response_text)
-
-        except Exception as e:
-            error_str = str(e)
-            if '429' in error_str or '503' in error_str or 'quota' in error_str.lower():
-                wait = (attempt + 1) * 10   # 10s, 20s, 30s, 40s, 50s
-                print(f"Gemini quota hit. Waiting {wait}s before retry {attempt + 1}/5...")
-                time.sleep(wait)
-                continue
-            raise
-
-    raise Exception("Gemini quota exhausted after 5 retries. Try again in a few minutes.")
+    
+    try:
+        return call_llm_json(prompt, temperature=0.3, max_tokens=2500)
+    except Exception as e:
+        print(f'CV parsing failed with all providers: {e}')
+        raise

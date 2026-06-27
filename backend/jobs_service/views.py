@@ -3,34 +3,75 @@ from datetime import timedelta
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 
 from .models import Job, SavedJob, Application
 from .serializers import JobSerializer, ApplicationSerializer, SavedJobSerializer
 
 
+class FeaturedJobsView(APIView):
+    """Public endpoint - returns 10 most recent ACTIVE jobs for landing page carousel"""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Only show active jobs (not expired)
+        jobs = Job.objects.filter(
+            scraped_at__gte=timezone.now() - timedelta(days=30)  # Recent jobs
+        ).order_by('-scraped_at')[:10]
+        
+        # Filter out expired jobs
+        active_jobs = [job for job in jobs if job.is_active]
+        
+        return Response(JobSerializer(active_jobs, many=True).data)
+
+
+class JobStatsView(APIView):
+    """Return stats about scraped jobs for frontend display"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        total_jobs = Job.objects.count()
+        recent_jobs = Job.objects.filter(
+            scraped_at__gte=timezone.now() - timedelta(hours=24)
+        ).count()
+        
+        latest_job = Job.objects.order_by('-scraped_at').first()
+        latest_scrape_time = latest_job.scraped_at if latest_job else None
+        
+        return Response({
+            'total_jobs': total_jobs,
+            'recent_jobs_24h': recent_jobs,
+            'latest_scrape': latest_scrape_time,
+            'needs_refresh': recent_jobs < 10,
+        })
+
+
 class JobListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Only show active (non-expired) jobs
         jobs = Job.objects.all()
+        
+        # Filter out expired jobs
+        active_jobs = [job for job in jobs if job.is_active]
 
         # filter by upcoming deadline
         deadline_filter = request.query_params.get('deadline')
         if deadline_filter == 'soon':
-            cutoff = timezone.now().date() + timedelta(days=7)
-            jobs   = jobs.filter(
-                deadline__lte=cutoff,
-                deadline__gte=timezone.now().date()
-            )
+            # Jobs expiring in next 7 days
+            active_jobs = [job for job in active_jobs if 0 <= job.days_until_deadline <= 7]
 
         # filter by skill
         skill = request.query_params.get('skill')
         if skill:
-            jobs = jobs.filter(required_skills__icontains=skill)
+            active_jobs = [job for job in active_jobs if skill.lower() in ' '.join(job.required_skills).lower()]
 
-        return Response(JobSerializer(jobs[:50], many=True).data)
+        # Sort by urgency (closest deadline first)
+        active_jobs.sort(key=lambda j: j.days_until_deadline)
+
+        return Response(JobSerializer(active_jobs[:50], many=True).data)
 
 
 class ApplicationView(APIView):

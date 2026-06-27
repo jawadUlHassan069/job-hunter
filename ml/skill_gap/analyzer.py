@@ -1,15 +1,13 @@
 import json
-import time
-import google.genai as genai
-from django.conf import settings
-
-
-def get_gemini_client():
-    return genai.Client(api_key=settings.GEMINI_API_KEY)
+from utils.llm_client import call_llm_json
 
 
 def analyze_skill_gap(cv_parsed: dict, job: dict) -> dict:
-    client     = get_gemini_client()
+    """
+    Analyze skill gap between CV and job using multi-model LLM client.
+    Tries Groq → OpenRouter → Gemini until one succeeds.
+    """
+    
     cv_skills  = cv_parsed.get('skills',     [])
     cv_exp     = cv_parsed.get('experience', [])
     job_skills = job.get('required_skills',  [])
@@ -43,23 +41,9 @@ Return exactly this JSON:
   "summary": "2 sentence summary of overall fit"
 }}
 """
-
-    # retry up to 3 times on 503
-    for attempt in range(3):
-        try:
-            response = client.models.generate_content(
-                model    = 'models/gemini-2.0-flash-lite',
-                contents = prompt,
-            )
-            text = response.text.strip()
-            if text.startswith('```'):
-                lines = text.split('\n')
-                text  = '\n'.join(lines[1:-1])
-            return json.loads(text)
-
-        except Exception as e:
-            if '503' in str(e) and attempt < 2:
-                print(f"Gemini busy, retrying in 5s... (attempt {attempt + 1})")
-                time.sleep(5)
-                continue
-            raise
+    
+    try:
+        return call_llm_json(prompt, temperature=0.3, max_tokens=2000)
+    except Exception as e:
+        print(f'Skill gap analysis failed with all providers: {e}')
+        raise

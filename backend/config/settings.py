@@ -116,7 +116,7 @@ CORS_ALLOWED_ORIGINS = [
 # enforced on our API views. These settings make that explicit and safe.
 CSRF_COOKIE_HTTPONLY   = False   # Allow JS to read CSRF token if ever needed
 CSRF_TRUSTED_ORIGINS   = [
-    "https://job-hunter-du0n.onrender.com",
+     "https://job-hunter-tau-eight.vercel.app",
     'http://localhost:5173',
     'http://localhost:3000',
     'http://127.0.0.1:5173',

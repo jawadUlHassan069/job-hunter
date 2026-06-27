@@ -1,24 +1,18 @@
 import json
-import anthropic
-from django.conf import settings
+from utils.llm_client import call_llm_json
 
 
 def analyze_skill_gap(cv_parsed: dict, job: dict) -> dict:
     """
-    Compare a candidate's CV against a job's requirements.
-
-    cv_parsed : structured dict from CV parsing
-    job       : dict with title, description, required_skills
-
-    Returns structured gap report.
+    Analyze skill gap between CV and job using multi-model LLM client.
+    Tries Groq → OpenRouter → Gemini until one succeeds.
     """
-    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
-
-    cv_skills    = cv_parsed.get('skills',     [])
-    cv_exp       = cv_parsed.get('experience', [])
-    job_skills   = job.get('required_skills',  [])
-    job_title    = job.get('title',            '')
-    job_desc     = job.get('description',      '')
+    
+    cv_skills  = cv_parsed.get('skills',     [])
+    cv_exp     = cv_parsed.get('experience', [])
+    job_skills = job.get('required_skills',  [])
+    job_title  = job.get('title',            '')
+    job_desc   = job.get('description',      '')
 
     prompt = f"""
 You are a career advisor analyzing a candidate's fit for a job.
@@ -47,17 +41,9 @@ Return exactly this JSON:
   "summary": "2 sentence summary of overall fit"
 }}
 """
-
-    message = client.messages.create(
-        model      = 'claude-sonnet-4-20250514',
-        max_tokens = 1000,
-        messages   = [{'role': 'user', 'content': prompt}]
-    )
-
-    text = message.content[0].text.strip()
-
-    if text.startswith('```'):
-        lines = text.split('\n')
-        text  = '\n'.join(lines[1:-1])
-
-    return json.loads(text)
+    
+    try:
+        return call_llm_json(prompt, temperature=0.3, max_tokens=2000)
+    except Exception as e:
+        print(f'Skill gap analysis failed with all providers: {e}')
+        raise

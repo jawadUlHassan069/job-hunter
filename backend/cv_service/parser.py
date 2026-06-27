@@ -1,11 +1,11 @@
 import json
-import anthropic
-from django.conf import settings
+from pathlib import Path
+import fitz  # PyMuPDF
+from utils.llm_client import call_llm_json
 
 
 def extract_text_from_pdf(file_path: str) -> str:
-    """Extract raw text from a PDF using PyMuPDF."""
-    import fitz  # PyMuPDF
+    """Extract text from PDF using PyMuPDF"""
     doc  = fitz.open(file_path)
     text = ''
     for page in doc:
@@ -16,11 +16,10 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 def parse_cv_with_llm(raw_text: str) -> dict:
     """
-    Send raw CV text to Claude API.
-    Returns structured JSON with name, skills, experience etc.
+    Parse CV using multi-model LLM client with automatic fallback.
+    Tries Groq → OpenRouter → Gemini until one succeeds.
     """
-    client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
-
+    
     prompt = f"""
 You are a CV parser. Extract structured information from the CV text below.
 Return ONLY a valid JSON object. No explanation. No markdown. No code blocks.
@@ -56,18 +55,9 @@ Extract these exact fields:
 CV Text:
 {raw_text[:4000]}
 """
-
-    message = client.messages.create(
-        model      = 'claude-sonnet-4-20250514',
-        max_tokens = 1500,
-        messages   = [{'role': 'user', 'content': prompt}]
-    )
-
-    response_text = message.content[0].text.strip()
-
-    # strip markdown fences if present
-    if response_text.startswith('```'):
-        lines         = response_text.split('\n')
-        response_text = '\n'.join(lines[1:-1])
-
-    return json.loads(response_text)
+    
+    try:
+        return call_llm_json(prompt, temperature=0.3, max_tokens=2500)
+    except Exception as e:
+        print(f'CV parsing failed with all providers: {e}')
+        raise

@@ -2,11 +2,18 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ml/ folder so Django apps can import from it
 sys.path.insert(0, str(BASE_DIR.parent / 'ml'))
+
+
+
+
 
 # ── Core ──────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-changeme-in-production')
@@ -29,13 +36,14 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_totp',
     'django_celery_beat',
+    'django_ratelimit',
 
     # our apps
     'auth_service',
     'cv_service',
     'jobs_service',
     'matching_service',
-    'notifications',
+    'cv_agent',
 ]
 
 MIDDLEWARE = [
@@ -83,16 +91,6 @@ DATABASES = {
     }
 }
 
-# ── REST Framework ─────────────────────────────────────
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-}
-
 # ── JWT ────────────────────────────────────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=config('ACCESS_TOKEN_LIFETIME_MINUTES', default=60,  cast=int)),
@@ -106,7 +104,30 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',   # Fix #8 — was missing
 ]
+
+# ── CSRF ───────────────────────────────────────────────
+# DRF with JWT auth does NOT use session/cookie auth so CSRF is not
+# enforced on our API views. These settings make that explicit and safe.
+CSRF_COOKIE_HTTPONLY   = False   # Allow JS to read CSRF token if ever needed
+CSRF_TRUSTED_ORIGINS   = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+]
+# Ensure SessionAuthentication is never accidentally used (it enforces CSRF)
+# JWT auth is the only authentication backend for the REST API
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # DO NOT add SessionAuthentication here — it would re-enable CSRF enforcement
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
 
 # ── 2FA ────────────────────────────────────────────────
 OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='JobHunter')
@@ -115,11 +136,25 @@ OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='JobHunter')
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ── Cache (used by django-ratelimit for distributed rate limiting) ─
+# Uses Redis database 1 (Celery uses 0) to avoid key collisions
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
+    }
+}
+
 # ── Celery ─────────────────────────────────────────────
 CELERY_BROKER_URL      = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND  = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT  = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+# In dev (DEBUG=True) run tasks inline so you don't need Redis running.
+# In prod set CELERY_ALWAYS_EAGER=False in .env to use real async workers.
+CELERY_TASK_ALWAYS_EAGER     = config('CELERY_ALWAYS_EAGER', default=DEBUG, cast=bool)
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # ── Email ──────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
@@ -130,7 +165,9 @@ EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # ── LLM ────────────────────────────────────────────────
-CLAUDE_API_KEY = config('CLAUDE_API_KEY', default='')
+GEMINI_API_KEY     = config('GEMINI_API_KEY',     default='')
+GROQ_API_KEY       = config('GROQ_API_KEY',       default='')
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
 
 # ── Sentry ─────────────────────────────────────────────
 SENTRY_DSN = config('SENTRY_DSN', default='')

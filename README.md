@@ -7,10 +7,10 @@ A cloud-based Smart CV and Job Matching Platform built for CSL 220 Cloud Computi
 ## Team
 | Name | Role | Enrollment |
 |------|------|------------|
-| Salman Khan (Lead) | Backend + ML | 02-131232-121 |
+| Jawad Ul Hassan (Lead) | Backend + ML | 02-131232-069 |
+| Salman Khan | Jobs + ATS | 02-131232-121 |
 | Zohaib Arshad Noor | Skill Gap + Testing | 02-131232-066 |
 | Keyan Majid | Frontend + CV Maker | 02-131232-021 |
-| Jawad Ul Hassan | Jobs + ATS | 02-131232-069 |
 
 ---
 
@@ -79,7 +79,6 @@ pip install -r backend/requirements.txt
 # setup environment variables
 cp backend/.env.example backend/.env
 # open backend/.env and fill in your values
-# ask Salman for DB password and API keys
 
 # run migrations
 cd backend

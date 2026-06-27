@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Job(models.Model):
@@ -21,6 +23,32 @@ class Job(models.Model):
 
     def __str__(self):
         return f'{self.title} at {self.company}'
+    
+    @property
+    def effective_deadline(self):
+        """
+        Return the actual deadline or assume 30 days from scrape date if no deadline.
+        This ensures all jobs have a validity period.
+        """
+        if self.deadline:
+            return self.deadline
+        # If no explicit deadline, assume job is valid for 30 days
+        return (self.scraped_at + timedelta(days=30)).date()
+    
+    @property
+    def days_until_deadline(self):
+        """
+        Calculate days remaining until deadline.
+        Returns negative number if deadline has passed.
+        """
+        today = timezone.now().date()
+        deadline = self.effective_deadline
+        return (deadline - today).days
+    
+    @property
+    def is_active(self):
+        """Check if job is still accepting applications (deadline not passed)"""
+        return self.days_until_deadline >= 0
 
 
 class SavedJob(models.Model):

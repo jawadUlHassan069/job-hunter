@@ -2,7 +2,7 @@
 import api from "./axios";
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://job-hunter-du0n.onrender.com";
 
 export const authAPI = {
   // Public — use plain axios so no auth header is added

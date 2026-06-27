@@ -103,13 +103,7 @@ SIMPLE_JWT = {
 }
 
 # ── CORS ───────────────────────────────────────────────
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000',
-    'https://job-hunter-tau-eight.vercel.app',   
-]
+CORS_ALLOW_ALL_ORIGINS = True  # Temporarily allow all origins for debugging
 
 # ── CSRF ───────────────────────────────────────────────
 # DRF with JWT auth does NOT use session/cookie auth so CSRF is not

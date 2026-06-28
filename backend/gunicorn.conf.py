@@ -8,8 +8,10 @@ import os
 bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"
 
 # ── Worker Configuration ──────────────────────────────────────
-# Use 2 workers to prevent request blocking (free tier can handle this)
-workers = 2
+# REDUCED TO 1 WORKER due to memory constraints on Render free tier
+# With ML model (~400MB) + Playwright (~200MB), 2 workers exceeds 512MB limit
+# Consider: Run locally for development OR upgrade Render plan for 2+ workers
+workers = 1
 
 # Worker class - sync is most memory efficient
 worker_class = 'sync'
@@ -36,7 +38,9 @@ errorlog = '-'
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 
 # ── Performance ───────────────────────────────────────────────
-preload_app = True
+# preload_app disabled to allow Gunicorn to bind port before loading Django
+# This fixes "Port scan timeout" on Render by ensuring health check passes
+preload_app = False
 limit_request_line = 4096
 limit_request_fields = 100
 limit_request_field_size = 8190

@@ -4,7 +4,12 @@ from decouple import config, Csv
 import sys
 from dotenv import load_dotenv
 
+# Load .env file (default)
 load_dotenv()
+
+# Load .env.local if it exists (overrides .env for local development)
+# This allows you to have local settings without modifying .env
+load_dotenv('.env.local', override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

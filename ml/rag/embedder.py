@@ -3,10 +3,20 @@ os.environ['ANONYMIZED_TELEMETRY'] = 'False'
 
 import chromadb
 from pathlib import Path
-from sentence_transformers import SentenceTransformer
 
-# runs on your CPU — no API needed
-embedder    = SentenceTransformer('all-MiniLM-L6-v2')
+# Lazy loading - model will be loaded only when first needed
+_embedder = None
+
+def get_embedder():
+    """
+    Lazy load the sentence transformer model.
+    This prevents loading 400MB model on every import.
+    """
+    global _embedder
+    if _embedder is None:
+        from sentence_transformers import SentenceTransformer
+        _embedder = SentenceTransformer('all-MiniLM-L6-v2')
+    return _embedder
 
 # absolute path — works from anywhere
 CHROMA_PATH = Path(__file__).resolve().parent / 'chroma_store'
@@ -28,6 +38,7 @@ def embed_cv(cv_id: int, cv_text: str, parsed: dict):
     Convert CV text into a vector and store in ChromaDB.
     Called after every CV upload.
     """
+    embedder = get_embedder()  # Lazy load
     skills   = ' '.join(parsed.get('skills', []))
     combined = f"{cv_text[:2000]} Skills: {skills}"
     vector   = embedder.encode(combined).tolist()
@@ -50,6 +61,7 @@ def embed_job(job_id: int, title: str, description: str, skills: list):
     Convert job into a vector and store in ChromaDB.
     Called after every job is scraped or added.
     """
+    embedder = get_embedder()  # Lazy load
     skills_text = ' '.join(skills)
     combined    = f"{title}. {description[:2000]} Required: {skills_text}"
     vector      = embedder.encode(combined).tolist()

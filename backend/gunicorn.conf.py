@@ -18,9 +18,9 @@ worker_class = 'sync'
 threads = 2
 
 # ── Timeout Configuration ─────────────────────────────────────
-# Increased timeout for CV processing and LLM calls
-# CRITICAL: Must be higher than Render's proxy timeout (30s) to see actual errors
-timeout = 60  # 1 minute (was 120, reducing to match Render's expectations)
+# Increased timeout for CV processing, LLM calls, AND web scraping
+# Scraping with Playwright can take 60-120 seconds
+timeout = 180  # 3 minutes - allows time for scraping operations
 graceful_timeout = 30
 keepalive = 5
 

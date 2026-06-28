@@ -40,6 +40,7 @@ def embed_job(job_id: int):
     """
     Embed a job into the vector database.
     Called after job scraping.
+    Does not raise exceptions to allow bulk operations to continue.
     """
     try:
         from jobs_service.models import Job
@@ -48,6 +49,7 @@ def embed_job(job_id: int):
         job = Job.objects.get(id=job_id)
         embed_job_func(job_id, job.title, job.description, job.required_skills)
         print(f'Job {job_id} embedded successfully')
+        return True
     except Exception as e:
         print(f'embed_job failed for Job {job_id}: {e}')
-        raise
+        return False  # Don't raise, just return False

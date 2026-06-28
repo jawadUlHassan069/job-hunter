@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_otp',
     'django_otp.plugins.otp_totp',
-    'django_ratelimit',
 
     # our apps
     'auth_service',
@@ -133,15 +132,6 @@ OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='JobHunter')
 # ── File uploads ───────────────────────────────────────
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
-# ── Cache (In-Memory for rate limiting) ─────────────────
-# DummyCache = No caching (rate limiting disabled)
-# Safe for small apps, re-enable Redis for production if needed
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-    }
-}
 
 # ── Email ──────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'

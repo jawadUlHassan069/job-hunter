@@ -4,8 +4,6 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from django_ratelimit.decorators import ratelimit
-from django.utils.decorators import method_decorator
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -31,11 +29,8 @@ def get_tokens_for_user(user):
     }
 
 
-# ── Fix #3: Rate limiting ──────────────────────────────────────────────────────
-# Login: 5 attempts per minute per IP, 10 per minute per email
-# Register: 3 new accounts per hour per IP
-@method_decorator(ratelimit(key='ip',    rate='5/m',  method='POST', block=True), name='dispatch')
-@method_decorator(ratelimit(key='post:email', rate='10/m', method='POST', block=True), name='dispatch')
+# ── Rate limiting removed (no Redis available) ────────────────────────────────
+# Note: Rate limiting disabled in production. Add Redis to re-enable.
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -51,8 +46,6 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(ratelimit(key='ip',    rate='10/m',  method='POST', block=True), name='dispatch')
-@method_decorator(ratelimit(key='post:email', rate='5/m', method='POST', block=True), name='dispatch')
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -162,7 +155,6 @@ class Setup2FAView(APIView):
         )
 
 
-@method_decorator(ratelimit(key='ip', rate='10/m', method='POST', block=True), name='dispatch')
 class Verify2FAView(APIView):
     permission_classes = [AllowAny]
 

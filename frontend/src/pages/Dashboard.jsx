@@ -2,6 +2,7 @@
 // Connect to: GET /api/jobs/applications/  GET /api/jobs/saved/  GET /api/cv/  PATCH /api/jobs/applications/:id/
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import RefreshJobsButton from "../components/RefreshJobsButton";
 
 /* ─── API helper ──────────────────────────────────────────── */
 const BASE = import.meta.env.VITE_API_URL || "https://job-hunter-du0n.onrender.com";
@@ -369,6 +370,13 @@ export default function DashboardPage() {
           <StatCard icon="★"  label="Saved Jobs"         value={stats.saved}  accent="#a78bfa" delay={0.15} />
           <StatCard icon="📄" label="CVs Uploaded"       value={stats.cvs}    accent="#f59e0b" delay={0.20} />
         </div>
+
+        {/* Refresh Jobs Button - Available for all logged-in users */}
+        <RefreshJobsButton onRefreshComplete={() => {
+          // Reload browse jobs and stats after refresh
+          api("/api/jobs/").then(r => r.json()).then(jobs => setBrowseJobs(Array.isArray(jobs) ? jobs : [])).catch(() => {});
+          api("/api/jobs/stats/").then(r => r.json()).then(stats => setJobStats(stats)).catch(() => {});
+        }} />
 
         {/* Job database info */}
         {jobStats && jobStats.total_jobs > 0 && (

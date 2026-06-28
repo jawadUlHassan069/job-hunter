@@ -65,92 +65,17 @@ class CVUploadView(APIView):
 
         cv.save()
 
-        # trigger background embedding
-        try:
-            from matching_service.tasks import embed_cv
-            embed_cv(cv.id)
-        except Exception as e:
-            print(f'Embedding task failed: {e}')
+        # ─────────────────────────────────────────────────────────────────────
+        # MEMORY OPTIMIZATION: Skip heavy embedding/matching during upload
+        # to prevent OOM on Render free tier (512MB RAM limit).
+        # Job matching is now done lazily via /api/match/ endpoint.
+        # ─────────────────────────────────────────────────────────────────────
 
         # Calculate CV quality score
         cv_quality = _calculate_cv_quality_score(cv.parsed)
 
-        # Get top 5 recent jobs and calculate match scores
+        # Return lightweight response - no job matching here
         job_matches = []
-        try:
-            from jobs_service.models import Job
-            from jobs_service.serializers import JobSerializer
-            
-            recent_jobs = Job.objects.order_by('-scraped_at')[:5]
-            
-            if recent_jobs.exists():
-                # Wait a moment for embedding to complete (if running eagerly)
-                import time
-                time.sleep(2)
-                
-                # Get similarity scores (semantic matching)
-                try:
-                    from rag.embedder import get_similarity_scores
-                    from skill_gap.analyzer import analyze_skill_gap
-                    
-                    scores = get_similarity_scores(cv.id, top_k=5)
-                    
-                    # Map scores to jobs
-                    scores_map = {s['job_id']: s['similarity'] for s in scores}
-                    
-                    for job in recent_jobs:
-                        job_data = JobSerializer(job).data
-                        semantic_score = scores_map.get(job.id, 0)
-                        
-                        # Calculate skill-based match using LLM
-                        try:
-                            job_dict = {
-                                'title': job.title,
-                                'description': job.description,
-                                'required_skills': job.required_skills,
-                            }
-                            skill_gap_result = analyze_skill_gap(cv.parsed, job_dict)
-                            skill_match_score = skill_gap_result.get('match_score', 0)
-                        except Exception as e:
-                            print(f'Skill gap analysis failed for job {job.id}: {e}')
-                            skill_match_score = 0
-                        
-                        # Hybrid scoring: 30% semantic + 70% skills
-                        hybrid_score = (semantic_score * 0.3) + (skill_match_score * 0.7)
-                        match_score = round(hybrid_score)
-                        
-                        # Determine match label
-                        if match_score >= 80:
-                            label = "Excellent Match"
-                        elif match_score >= 60:
-                            label = "Good Match"
-                        elif match_score >= 40:
-                            label = "Fair Match"
-                        else:
-                            label = "Low Match"
-                        
-                        job_matches.append({
-                            'job': job_data,
-                            'match_score': match_score,
-                            'semantic_score': round(semantic_score),
-                            'skill_score': round(skill_match_score),
-                            'match_label': label
-                        })
-                    
-                except Exception as e:
-                    print(f'Similarity calculation failed: {e}')
-                    # Return jobs without scores as fallback
-                    for job in recent_jobs:
-                        job_data = JobSerializer(job).data
-                        job_matches.append({
-                            'job': job_data,
-                            'match_score': 0,
-                            'semantic_score': 0,
-                            'skill_score': 0,
-                            'match_label': 'Calculating...'
-                        })
-        except Exception as e:
-            print(f'Job matching failed: {e}')
 
         # Build response with CV data + quality score + job matches
         response_data = {

@@ -33,8 +33,27 @@ def scrape_jobs():
     # Check if database already has jobs
     existing_jobs_count = Job.objects.count()
     
-    # If database already has mock data, try real scraping
-    if existing_jobs_count > 0:
+    # If database has fewer than 10 jobs, load mock data to ensure good UX
+    if existing_jobs_count < 10:
+        print(f"⚠ Database has only {existing_jobs_count} jobs. Loading mock data to ensure good UX...")
+        try:
+            from .seed_data import load_mock_jobs
+            mock_jobs_created = load_mock_jobs()
+            print(f"✅ Loaded {mock_jobs_created} new mock jobs (total now: {Job.objects.count()})")
+            return {
+                'status': 'completed',
+                'new_jobs': mock_jobs_created,
+                'updated_jobs': 0,
+                'embedded': 0
+            }
+        except Exception as e:
+            print(f"❌ Error loading mock data: {e}")
+            import traceback
+            traceback.print_exc()
+            # Continue to Playwright if mock data fails
+    
+    # If database already has 10+ jobs, try real scraping
+    if existing_jobs_count >= 10:
         print(f"Database has {existing_jobs_count} existing jobs. Attempting real scraping...")
         try:
             from agents.multi_source_scraper import run_multi_source_scraping
@@ -117,8 +136,9 @@ def scrape_jobs():
                 'embedded': 0
             }
     
-    # First time: Load mock data immediately (don't try scraping)
-    print("⚠ Database is empty. Loading mock data immediately...")
+    # This shouldn't happen (database < 10 jobs should have triggered mock data above)
+    # But as a final fallback, load mock data
+    print("⚠ Unexpected state: Database is empty after checks. Loading mock data...")
     try:
         from .seed_data import load_mock_jobs
         mock_jobs_created = load_mock_jobs()
@@ -127,7 +147,7 @@ def scrape_jobs():
             'status': 'completed',
             'new_jobs': mock_jobs_created,
             'updated_jobs': 0,
-            'embedded': 0  # Mock data handles its own embedding
+            'embedded': 0
         }
     except Exception as e:
         print(f"❌ Error loading mock data: {e}")

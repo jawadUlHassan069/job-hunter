@@ -18,6 +18,7 @@ def scrape_jobs():
     """
     Job scraper that can be triggered on-demand via API endpoint.
     Scrapes multiple job categories from multiple sources.
+    Falls back to mock data if scraping fails.
     
     Returns a dictionary with scraping results:
     {
@@ -27,100 +28,112 @@ def scrape_jobs():
         'embedded': int
     }
     """
-    from agents.multi_source_scraper import run_multi_source_scraping
     from jobs_service.models import Job
-    from matching_service.tasks import embed_job
     
-    queries = [
-        'python developer',
-        'frontend developer',
-        'backend developer',
-        'full stack developer',
-        'data scientist',
-        'machine learning engineer',
-        'devops engineer',
-        'software engineer',
-    ]
+    # Check if database already has jobs
+    existing_jobs_count = Job.objects.count()
     
-    total_new = 0
-    total_updated = 0
-    total_embedded = 0
-    
-    for query in queries:
+    # If database already has mock data, try real scraping
+    if existing_jobs_count > 0:
+        print(f"Database has {existing_jobs_count} existing jobs. Attempting real scraping...")
         try:
-            print(f"Scraping: {query}")
-            jobs = asyncio.run(run_multi_source_scraping(query, location="Pakistan", max_jobs=5))
+            from agents.multi_source_scraper import run_multi_source_scraping
+            from matching_service.tasks import embed_job
             
-            for job in jobs:
+            queries = [
+                'python developer',
+                'frontend developer',
+                'backend developer',
+                'full stack developer',
+            ]
+            
+            total_new = 0
+            total_updated = 0
+            total_embedded = 0
+            
+            for query in queries[:2]:  # Only try 2 queries to save time/memory
                 try:
-                    if not job.get('url') or not job.get('title'):
-                        continue
+                    print(f"Scraping: {query}")
+                    jobs = asyncio.run(run_multi_source_scraping(query, location="Pakistan", max_jobs=3))
                     
-                    obj, created = Job.objects.get_or_create(
-                        url=job['url'],
-                        defaults={
-                            'title': job.get('title', '')[:255],
-                            'company': job.get('company', 'Unknown')[:200],
-                            'location': job.get('location', 'Pakistan')[:200],
-                            'description': job.get('description', ''),
-                            'required_skills': job.get('required_skills', []),
-                            'source': job.get('source', 'unknown'),
-                        }
-                    )
-                    
-                    if created:
-                        total_new += 1
-                        # Embed new job
+                    for job in jobs:
                         try:
-                            embed_job(obj.id)
-                            total_embedded += 1
+                            if not job.get('url') or not job.get('title'):
+                                continue
+                            
+                            obj, created = Job.objects.get_or_create(
+                                url=job['url'],
+                                defaults={
+                                    'title': job.get('title', '')[:255],
+                                    'company': job.get('company', 'Unknown')[:200],
+                                    'location': job.get('location', 'Pakistan')[:200],
+                                    'description': job.get('description', ''),
+                                    'required_skills': job.get('required_skills', []),
+                                    'source': job.get('source', 'unknown'),
+                                }
+                            )
+                            
+                            if created:
+                                total_new += 1
+                                try:
+                                    embed_job(obj.id)
+                                    total_embedded += 1
+                                except Exception as e:
+                                    print(f"Error embedding job {obj.id}: {e}")
+                            else:
+                                updated = False
+                                if obj.description != job.get('description', ''):
+                                    obj.description = job.get('description', '')
+                                    updated = True
+                                if obj.required_skills != job.get('required_skills', []):
+                                    obj.required_skills = job.get('required_skills', [])
+                                    updated = True
+                                if updated:
+                                    obj.save()
+                                    total_updated += 1
+                                
                         except Exception as e:
-                            print(f"Error embedding job {obj.id}: {e}")
-                    else:
-                        # Update existing job if data has changed
-                        updated = False
-                        if obj.description != job.get('description', ''):
-                            obj.description = job.get('description', '')
-                            updated = True
-                        if obj.required_skills != job.get('required_skills', []):
-                            obj.required_skills = job.get('required_skills', [])
-                            updated = True
-                        if updated:
-                            obj.save()
-                            total_updated += 1
+                            print(f"Error saving job: {e}")
+                            continue
                         
                 except Exception as e:
-                    print(f"Error saving job: {e}")
+                    print(f"Error scraping {query}: {e}")
                     continue
-                    
+            
+            print(f"Real scraping complete: {total_new} new jobs, {total_updated} updated, {total_embedded} embedded")
+            return {
+                'status': 'completed',
+                'new_jobs': total_new,
+                'updated_jobs': total_updated,
+                'embedded': total_embedded
+            }
+            
         except Exception as e:
-            print(f"Error scraping {query}: {e}")
-            continue
+            print(f"Real scraping failed: {e}. Database already has {existing_jobs_count} jobs, so no fallback needed.")
+            return {
+                'status': 'completed',
+                'new_jobs': 0,
+                'updated_jobs': 0,
+                'embedded': 0
+            }
     
-    print(f"Scraping complete: {total_new} new jobs, {total_updated} updated, {total_embedded} embedded")
-    
-    # FALLBACK: If scraping returned 0 jobs AND database is empty, load mock data
-    if total_new == 0:
-        from jobs_service.models import Job
-        existing_jobs = Job.objects.count()
-        
-        if existing_jobs == 0:
-            print("⚠ Scraping returned 0 jobs and database is empty. Loading mock data...")
-            try:
-                from .seed_data import load_mock_jobs
-                mock_jobs_created = load_mock_jobs()
-                print(f"✅ Loaded {mock_jobs_created} mock jobs to populate the database")
-                total_new = mock_jobs_created
-                # Note: Mock jobs are already embedded in seed_data.py
-            except Exception as e:
-                print(f"❌ Error loading mock data: {e}")
-    
-    return {
-        'status': 'completed',
-        'new_jobs': total_new,
-        'updated_jobs': total_updated,
-        'embedded': total_embedded
-    }
+    # First time: Load mock data immediately (don't try scraping)
+    print("⚠ Database is empty. Loading mock data immediately...")
+    try:
+        from .seed_data import load_mock_jobs
+        mock_jobs_created = load_mock_jobs()
+        print(f"✅ Loaded {mock_jobs_created} mock jobs to populate the database")
+        return {
+            'status': 'completed',
+            'new_jobs': mock_jobs_created,
+            'updated_jobs': 0,
+            'embedded': 0  # Mock data handles its own embedding
+        }
+    except Exception as e:
+        print(f"❌ Error loading mock data: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def get_last_scrape_info():

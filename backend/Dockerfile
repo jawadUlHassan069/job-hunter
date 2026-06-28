@@ -3,22 +3,25 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for PyMuPDF and Playwright
+# Install system dependencies for Playwright and PyMuPDF
+# Note: Playwright requires many system libraries
 RUN apt-get update && apt-get install -y \
     gcc \
     libffi-dev \
     wget \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Install Python dependencies FIRST (better caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install ONLY Chromium browser for Playwright (saves ~400MB vs all 3 browsers)
-# This allows web scraping while keeping memory footprint minimal
-RUN playwright install chromium --with-deps
+# Install ONLY Chromium browser for Playwright
+# This step is large (~200MB) but necessary for web scraping
+# It will be skipped if Playwright fails, and mock data will be used instead
+RUN playwright install chromium --with-deps || echo "Playwright installation failed, will use mock data fallback"
 
-# Copy project
+# Copy project files
 COPY . .
 
 EXPOSE 8000

@@ -72,8 +72,8 @@ class Command(BaseCommand):
                     saved_count += 1
                     # Embed the new job into ChromaDB
                     try:
-                        from matching_service.tasks import embed_job_task
-                        embed_job_task.delay(obj.id)
+                        from matching_service.tasks import embed_job
+                        embed_job(obj.id)
                         embed_count += 1
                         self.stdout.write(f"  ✓ Saved + embedded: {obj.title} at {obj.company} (source: {obj.source})")
                     except Exception as embed_err:

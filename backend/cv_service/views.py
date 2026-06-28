@@ -67,10 +67,10 @@ class CVUploadView(APIView):
 
         # trigger background embedding
         try:
-            from matching_service.tasks import embed_cv_task
-            embed_cv_task.delay(cv.id)
+            from matching_service.tasks import embed_cv
+            embed_cv(cv.id)
         except Exception as e:
-            print(f'Celery embed task failed: {e}')
+            print(f'Embedding task failed: {e}')
 
         # Calculate CV quality score
         cv_quality = _calculate_cv_quality_score(cv.parsed)

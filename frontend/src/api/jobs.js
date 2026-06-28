@@ -2,17 +2,30 @@
 import api from "./axios";
 
 export const jobsAPI = {
-  list:              (params = {})  => api.get("/api/jobs/", { params }),
-  listSoon:          ()             => api.get("/api/jobs/", { params: { deadline: "soon" } }),
-  listBySkill:       (skill)        => api.get("/api/jobs/", { params: { skill } }),
-
-  getApplications:   ()             => api.get("/api/jobs/applications/"),
-  apply:             (job_id)       => api.post("/api/jobs/applications/", { job_id }),
-  updateApplication: (id, data)     => api.patch(`/api/jobs/applications/${id}/`, data),
-
-  getSaved:          ()             => api.get("/api/jobs/saved/"),
-  save:              (job_id)       => api.post("/api/jobs/saved/", { job_id }),
-  unsave:            (id)           => api.delete(`/api/jobs/saved/${id}/`),
+  // Get all jobs
+  getJobs: () => api.get("/api/jobs/"),
+  
+  // Get featured jobs for landing page
+  getFeaturedJobs: () => api.get("/api/jobs/featured/"),
+  
+  // Get job stats
+  getJobStats: () => api.get("/api/jobs/stats/"),
+  
+  // Trigger manual job scraping (authenticated users only)
+  triggerScraping: () => api.post("/api/jobs/scrape/"),
+  
+  // Get last scrape information
+  getLastScrapeInfo: () => api.get("/api/jobs/last-scrape/"),
+  
+  // Applications
+  getApplications: () => api.get("/api/jobs/applications/"),
+  applyToJob: (jobId) => api.post("/api/jobs/applications/", { job_id: jobId }),
+  updateApplication: (id, data) => api.patch(`/api/jobs/applications/${id}/`, data),
+  
+  // Saved jobs
+  getSavedJobs: () => api.get("/api/jobs/saved/"),
+  saveJob: (jobId) => api.post("/api/jobs/saved/", { job_id: jobId }),
+  unsaveJob: (id) => api.delete(`/api/jobs/saved/${id}/`),
 };
 
 export default jobsAPI;

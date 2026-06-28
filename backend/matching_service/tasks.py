@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-from celery import shared_task
 
 # __file__ is backend/matching_service/tasks.py
 # parents[0] = backend/matching_service/
@@ -20,29 +19,35 @@ if str(ML_PATH) not in sys.path:
     sys.path.insert(0, str(ML_PATH))
 
 
-@shared_task
-def embed_cv_task(cv_id: int):
+def embed_cv(cv_id: int):
+    """
+    Embed a CV into the vector database.
+    Called after CV upload/parsing.
+    """
     try:
         from cv_service.models import CV
-        from rag.embedder import embed_cv
+        from rag.embedder import embed_cv as embed_cv_func
 
         cv = CV.objects.get(id=cv_id)
-        embed_cv(cv_id, cv.raw_text, cv.parsed)
+        embed_cv_func(cv_id, cv.raw_text, cv.parsed)
         print(f'CV {cv_id} embedded successfully')
     except Exception as e:
-        print(f'embed_cv_task failed for CV {cv_id}: {e}')
-        raise   # re-raise so Celery marks task as FAILED not SUCCESS
+        print(f'embed_cv failed for CV {cv_id}: {e}')
+        raise
 
 
-@shared_task
-def embed_job_task(job_id: int):
+def embed_job(job_id: int):
+    """
+    Embed a job into the vector database.
+    Called after job scraping.
+    """
     try:
         from jobs_service.models import Job
-        from rag.embedder import embed_job
+        from rag.embedder import embed_job as embed_job_func
 
         job = Job.objects.get(id=job_id)
-        embed_job(job_id, job.title, job.description, job.required_skills)
+        embed_job_func(job_id, job.title, job.description, job.required_skills)
         print(f'Job {job_id} embedded successfully')
     except Exception as e:
-        print(f'embed_job_task failed for Job {job_id}: {e}')
+        print(f'embed_job failed for Job {job_id}: {e}')
         raise

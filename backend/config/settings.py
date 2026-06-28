@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_otp',
     'django_otp.plugins.otp_totp',
-    'django_celery_beat',
     'django_ratelimit',
 
     # our apps
@@ -135,25 +134,12 @@ OTP_TOTP_ISSUER = config('OTP_TOTP_ISSUER', default='JobHunter')
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ── Cache (used by django-ratelimit for distributed rate limiting) ─
-# Uses Redis database 1 (Celery uses 0) to avoid key collisions
+# ── Cache (In-Memory for rate limiting) ─────────────────
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
-
-# ── Celery ─────────────────────────────────────────────
-CELERY_BROKER_URL      = config('REDIS_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND  = config('REDIS_URL', default='redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT  = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-# In dev (DEBUG=True) run tasks inline so you don't need Redis running.
-# In prod set CELERY_ALWAYS_EAGER=False in .env to use real async workers.
-CELERY_TASK_ALWAYS_EAGER     = config('CELERY_ALWAYS_EAGER', default=DEBUG, cast=bool)
-CELERY_TASK_EAGER_PROPAGATES = True
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # ── Email ──────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'

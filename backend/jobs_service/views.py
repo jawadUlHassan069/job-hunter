@@ -167,3 +167,79 @@ class SavedJobView(APIView):
                 {'error': 'Saved job not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+
+class TriggerScrapingView(APIView):
+    """
+    POST /api/jobs/scrape/
+    Trigger job scraping manually.
+    Only authenticated users can access.
+    Returns scraping results.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            from .tasks import scrape_jobs
+            
+            # Trigger scraping synchronously
+            result = scrape_jobs()
+            
+            return Response({
+                'message': 'Scraping completed successfully',
+                'jobs_added': result.get('new_jobs', 0),
+                'jobs_updated': result.get('updated_jobs', 0),
+                'jobs_embedded': result.get('embedded', 0),
+                'status': result.get('status', 'completed')
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e),
+                'message': 'Scraping failed'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class LastScrapeInfoView(APIView):
+    """
+    GET /api/jobs/last-scrape/
+    Returns information about the last scrape.
+    For displaying scrape status in the dashboard.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            from .tasks import get_last_scrape_info
+            
+            info = get_last_scrape_info()
+            
+            # Calculate time since last scrape
+            last_scrape_time = info.get('last_scrape_time')
+            if last_scrape_time:
+                time_since_scrape = timezone.now() - last_scrape_time
+                hours_since = int(time_since_scrape.total_seconds() / 3600)
+                days_since = hours_since // 24
+                
+                if days_since > 0:
+                    time_display = f"{days_since} day{'s' if days_since != 1 else ''} ago"
+                elif hours_since > 0:
+                    time_display = f"{hours_since} hour{'s' if hours_since != 1 else ''} ago"
+                else:
+                    time_display = "Less than an hour ago"
+            else:
+                time_display = "Never"
+                
+            return Response({
+                'last_scrape_time': last_scrape_time,
+                'time_display': time_display,
+                'total_jobs': info.get('total_jobs', 0),
+                'recent_jobs_24h': info.get('recent_jobs_24h', 0),
+                'needs_refresh': info.get('needs_refresh', True),
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

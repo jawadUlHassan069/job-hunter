@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path('featured/',              views.FeaturedJobsView.as_view()),
     path('stats/',                 views.JobStatsView.as_view()),
+    path('scrape/',                views.TriggerScrapingView.as_view()),
+    path('last-scrape/',           views.LastScrapeInfoView.as_view()),
     path('',                       views.JobListView.as_view()),
     path('applications/',          views.ApplicationView.as_view()),
     path('applications/<int:pk>/', views.ApplicationView.as_view()),

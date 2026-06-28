@@ -320,8 +320,35 @@ async def run_multi_source_scraping(query="python developer", location="Pakistan
     
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
+            # Launch browser with memory optimization flags
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-dev-shm-usage',  # Overcome limited resource problems
+                    '--no-sandbox',              # Required for Docker/Render
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu',             # Disable GPU hardware acceleration
+                    '--disable-software-rasterizer',
+                    '--disable-extensions',      # Disable extensions
+                    '--disable-background-networking',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-breakpad',
+                    '--disable-component-extensions-with-background-pages',
+                    '--disable-features=TranslateUI',
+                    '--disable-ipc-flooding-protection',
+                    '--disable-renderer-backgrounding',
+                    '--enable-features=NetworkService,NetworkServiceInProcess',
+                    '--force-color-profile=srgb',
+                    '--hide-scrollbars',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--no-first-run',
+                ]
+            )
+            
+            # Create page with reduced viewport to save memory
+            page = await browser.new_page(viewport={'width': 1280, 'height': 720})
             
             # Set realistic user agent
             await page.set_extra_http_headers({

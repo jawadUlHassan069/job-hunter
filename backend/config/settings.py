@@ -135,9 +135,11 @@ MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # ── Cache (In-Memory for rate limiting) ─────────────────
+# DummyCache = No caching (rate limiting disabled)
+# Safe for small apps, re-enable Redis for production if needed
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
 }
 

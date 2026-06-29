@@ -344,21 +344,21 @@ export default function DashboardPage() {
     <div style={{ minHeight: "100vh", background: "#0f1419", position: "relative" }}>
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 50% 35% at 80% 0%,rgba(29,158,117,0.12) 0%,transparent 55%)" }} />
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 24px 80px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "0 16px 80px" }}>
 
         {/* Header */}
-        <div style={{ padding: "32px 0 28px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", borderBottom: "1px solid rgba(255,255,255,0.12)", marginBottom: 32 }}>
-          <div>
+        <div className="dashboard-header" style={{ padding: "24px 0 20px", display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap", borderBottom: "1px solid rgba(255,255,255,0.12)", marginBottom: 32 }}>
+          <div style={{ flex: "1 1 100%", minWidth: 0, marginBottom: 8 }}>
             <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", color: "#1d9e75", marginBottom: 4 }}>◈ DASHBOARD</div>
-            <div style={{ fontFamily: heading, fontWeight: 900, fontSize: "clamp(1.6rem,3vw,2.2rem)", color: "#f3f6ff", lineHeight: 1 }}>
+            <div style={{ fontFamily: heading, fontWeight: 900, fontSize: "clamp(1.4rem,3vw,2.2rem)", color: "#f3f6ff", lineHeight: 1.1 }}>
               {user?.name ? `Welcome back, ${user.name}` : "My Dashboard"}
             </div>
           </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
-            <button className="db-nav-btn" onClick={() => navigate("/cv-analysis")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(29,158,117,0.18)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.35)", cursor: "pointer" }}>Upload CV →</button>
-            <button className="db-nav-btn" onClick={() => navigate("/cv-maker")} style={{ fontSize: 11, fontFamily: mono, padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.7)", border: "1px solid rgba(255,255,255,0.14)", cursor: "pointer" }}>Build CV →</button>
-            <button className="db-nav-btn" onClick={logout} style={{ fontSize: 11, fontFamily: mono, padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.5)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>Log out</button>
+          <div className="dashboard-header-buttons" style={{ display: "flex", gap: 6, flexWrap: "wrap", width: "100%", alignItems: "center" }}>
+            <button onClick={toggleTheme} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s", flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"} aria-label="Toggle theme">{theme === "light" ? "🌙" : "☀️"}</button>
+            <button className="db-nav-btn" onClick={() => navigate("/cv-analysis")} style={{ fontSize: 10, fontFamily: mono, padding: "7px 12px", borderRadius: 8, background: "rgba(29,158,117,0.18)", color: "#1d9e75", border: "1px solid rgba(29,158,117,0.35)", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>Upload CV →</button>
+            <button className="db-nav-btn" onClick={() => navigate("/cv-maker")} style={{ fontSize: 10, fontFamily: mono, padding: "7px 12px", borderRadius: 8, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.7)", border: "1px solid rgba(255,255,255,0.14)", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>Build CV →</button>
+            <button className="db-nav-btn" onClick={logout} style={{ fontSize: 10, fontFamily: mono, padding: "7px 10px", borderRadius: 8, background: "rgba(255,255,255,0.06)", color: "rgba(243,246,255,0.5)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap", marginLeft: "auto" }}>Log out</button>
           </div>
         </div>
 
@@ -538,6 +538,37 @@ if (typeof document !== 'undefined' && !document.getElementById('dashboard-mobil
   const style = document.createElement('style');
   style.id = 'dashboard-mobile-css';
   style.textContent = `
+    /* Dashboard header mobile responsive */
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 20px 0 16px !important;
+      }
+      
+      .dashboard-header-buttons {
+        gap: 6px !important;
+      }
+      
+      .db-nav-btn {
+        font-size: 10px !important;
+        padding: 7px 12px !important;
+      }
+    }
+    
+    @media (max-width: 520px) {
+      .dashboard-header {
+        padding: 16px 0 14px !important;
+      }
+      
+      .dashboard-header-buttons {
+        gap: 6px !important;
+      }
+      
+      .db-nav-btn {
+        font-size: 9px !important;
+        padding: 6px 10px !important;
+      }
+    }
+    
     /* Stats grid mobile responsive */
     @media (max-width: 768px) {
       [style*="gridTemplateColumns: \"repeat(auto-fit,minmax(160px,1fr))\""] {
@@ -600,6 +631,12 @@ if (typeof document !== 'undefined' && !document.getElementById('dashboard-mobil
       /* Smaller font sizes */
       [style*="fontSize: 28"] {
         font-size: 24px !important;
+      }
+      
+      /* Even smaller button text */
+      .db-nav-btn {
+        font-size: 8px !important;
+        padding: 6px 8px !important;
       }
     }
   `;

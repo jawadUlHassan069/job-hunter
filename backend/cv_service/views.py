@@ -65,11 +65,15 @@ class CVUploadView(APIView):
 
         cv.save()
 
-        # ─────────────────────────────────────────────────────────────────────
-        # MEMORY OPTIMIZATION: Skip heavy embedding/matching during upload
-        # to prevent OOM on Render free tier (512MB RAM limit).
-        # Job matching is now done lazily via /api/match/ endpoint.
-        # ─────────────────────────────────────────────────────────────────────
+        # Embed CV for semantic job matching
+        # Uses either remote HuggingFace Spaces service or local model
+        try:
+            from matching_service.tasks import embed_cv
+            embed_cv(cv.id)
+            print(f'CV {cv.id} embedded successfully')
+        except Exception as e:
+            print(f'CV embedding failed: {e}')
+            # Continue anyway - user can still use basic features
 
         # Calculate CV quality score
         cv_quality = _calculate_cv_quality_score(cv.parsed)

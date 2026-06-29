@@ -3,20 +3,62 @@ os.environ['ANONYMIZED_TELEMETRY'] = 'False'
 
 import chromadb
 from pathlib import Path
+import requests
+from typing import List
+from decouple import config
 
-# Lazy loading - model will be loaded only when first needed
-_embedder = None
+# Configuration
+USE_REMOTE_EMBEDDER = config('USE_REMOTE_EMBEDDER', default=False, cast=bool)
+EMBEDDING_SERVICE_URL = config('EMBEDDING_SERVICE_URL', default='')
 
-def get_embedder():
-    """
-    Lazy load the sentence transformer model.
-    This prevents loading 400MB model on every import.
-    """
-    global _embedder
-    if _embedder is None:
+# Lazy loading for local model - only used if remote service is disabled
+_local_embedder = None
+
+def get_local_embedder():
+    """Lazy load the local SentenceTransformer model."""
+    global _local_embedder
+    if _local_embedder is None:
+        print("Loading local SentenceTransformer model...")
         from sentence_transformers import SentenceTransformer
-        _embedder = SentenceTransformer('all-MiniLM-L6-v2')
-    return _embedder
+        _local_embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        print("Local model loaded successfully")
+    return _local_embedder
+
+
+def get_embeddings(texts: List[str]) -> List[List[float]]:
+    """
+    Generate embeddings for texts using either remote service or local model.
+    
+    Args:
+        texts: List of strings to embed
+        
+    Returns:
+        List of embedding vectors (each vector is a list of floats)
+    """
+    if USE_REMOTE_EMBEDDER and EMBEDDING_SERVICE_URL:
+        # Use remote HuggingFace Spaces service
+        try:
+            response = requests.post(
+                f"{EMBEDDING_SERVICE_URL}/embed",
+                json={"texts": texts},
+                timeout=30
+            )
+            response.raise_for_status()
+            data = response.json()
+            print(f"Generated {len(data['embeddings'])} embeddings via remote service")
+            return data['embeddings']
+        except Exception as e:
+            print(f"Remote embedding service failed: {e}")
+            print("Falling back to local model...")
+            # Fall back to local model
+            embedder = get_local_embedder()
+            embeddings = embedder.encode(texts)
+            return [emb.tolist() for emb in embeddings]
+    else:
+        # Use local model
+        embedder = get_local_embedder()
+        embeddings = embedder.encode(texts)
+        return [emb.tolist() for emb in embeddings]
 
 # absolute path — works from anywhere
 CHROMA_PATH = Path(__file__).resolve().parent / 'chroma_store'
@@ -38,10 +80,12 @@ def embed_cv(cv_id: int, cv_text: str, parsed: dict):
     Convert CV text into a vector and store in ChromaDB.
     Called after every CV upload.
     """
-    embedder = get_embedder()  # Lazy load
     skills   = ' '.join(parsed.get('skills', []))
     combined = f"{cv_text[:2000]} Skills: {skills}"
-    vector   = embedder.encode(combined).tolist()
+    
+    # Get embedding (remote or local)
+    embeddings = get_embeddings([combined])
+    vector = embeddings[0]
 
     cv_collection.upsert(
         ids        = [str(cv_id)],
@@ -61,10 +105,12 @@ def embed_job(job_id: int, title: str, description: str, skills: list):
     Convert job into a vector and store in ChromaDB.
     Called after every job is scraped or added.
     """
-    embedder = get_embedder()  # Lazy load
     skills_text = ' '.join(skills)
     combined    = f"{title}. {description[:2000]} Required: {skills_text}"
-    vector      = embedder.encode(combined).tolist()
+    
+    # Get embedding (remote or local)
+    embeddings = get_embeddings([combined])
+    vector = embeddings[0]
 
     job_collection.upsert(
         ids        = [str(job_id)],

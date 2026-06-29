@@ -183,7 +183,40 @@ class TriggerScrapingView(APIView):
         try:
             from .tasks import scrape_jobs
             
-            # Trigger scraping synchronously
+            # Auto-detect if running on Render (ephemeral storage)
+            # Always force re-embed on Render since ChromaDB uses /tmp (wiped on restart)
+            import os
+            is_render = bool(os.environ.get('RENDER'))
+            force_reembed = request.data.get('force_reembed', is_render)  # Default true on Render
+            
+            if force_reembed:
+                # Re-embed all existing jobs (useful after deployment)
+                from .models import Job
+                from matching_service.tasks import embed_job as embed_job_task
+                
+                all_jobs = Job.objects.all()
+                total_jobs = all_jobs.count()
+                embedded_count = 0
+                
+                print(f"🔧 Force re-embedding {total_jobs} existing jobs...")
+                
+                for job in all_jobs:
+                    try:
+                        result = embed_job_task(job.id)
+                        if result:
+                            embedded_count += 1
+                    except Exception as e:
+                        print(f"Failed to embed job {job.id}: {e}")
+                
+                return Response({
+                    'message': f'Re-embedded {embedded_count}/{total_jobs} existing jobs',
+                    'jobs_added': 0,
+                    'jobs_updated': 0,
+                    'jobs_embedded': embedded_count,
+                    'status': 'completed'
+                }, status=status.HTTP_200_OK)
+            
+            # Normal scraping flow
             result = scrape_jobs()
             
             return Response({

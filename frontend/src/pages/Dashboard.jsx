@@ -395,9 +395,9 @@ export default function DashboardPage() {
         )}
 
         {/* Pipeline */}
-        <div style={{ marginBottom: 40, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.12)", animation: "db-fadeUp .5s ease .2s both" }}>
+        <div className="pipeline-section" style={{ marginBottom: 40, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.12)", animation: "db-fadeUp .5s ease .2s both" }}>
           <div style={{ fontSize: 10, fontFamily: mono, letterSpacing: "0.22em", color: "rgba(243,246,255,0.45)", marginBottom: 14 }}>◈ APPLICATION PIPELINE</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
+          <div className="pipeline-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
             {STATUSES.map(s => {
               const c = STATUS_COLORS[s];
               const count = pipelineCounts[s] || 0;
@@ -532,3 +532,77 @@ function Empty({ icon, title, sub, action }) {
     </div>
   );
 }
+
+// Add mobile responsive styles
+if (typeof document !== 'undefined' && !document.getElementById('dashboard-mobile-css')) {
+  const style = document.createElement('style');
+  style.id = 'dashboard-mobile-css';
+  style.textContent = `
+    /* Stats grid mobile responsive */
+    @media (max-width: 768px) {
+      [style*="gridTemplateColumns: \"repeat(auto-fit,minmax(160px,1fr))\""] {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+    
+    /* Pipeline and content grids mobile responsive */
+    @media (max-width: 768px) {
+      .pipeline-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+    
+    @media (max-width: 520px) {
+      /* Pipeline - single column on small mobile */
+      .pipeline-grid {
+        grid-template-columns: 1fr !important;
+      }
+      
+      /* Stats - 2 columns on small mobile */
+      .stats-grid-mobile {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      
+      /* Reduce padding on pipeline section */
+      .pipeline-section {
+        padding: 14px 16px !important;
+      }
+      
+      /* Header - wrap buttons */
+      [style*="display: \"flex\""][style*="gap: 8"] {
+        flex-wrap: wrap;
+      }
+      
+      /* Tab buttons - reduce padding */
+      .db-tab-btn {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+      }
+      
+      /* Filter pills - wrap properly */
+      [style*="display: \"flex\""][style*="gap: 6"][style*="marginBottom: 20"] {
+        flex-wrap: wrap;
+      }
+      
+      /* Job cards grid - single column on small screens */
+      [style*="gridTemplateColumns: \"repeat(auto-fill,minmax(320px,1fr))\""],
+      [style*="gridTemplateColumns: \"repeat(auto-fill,minmax(280px,1fr))\""] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    
+    @media (max-width: 380px) {
+      /* Extra small screens - adjust stat cards */
+      .db-stat-card {
+        padding: 16px 18px !important;
+      }
+      
+      /* Smaller font sizes */
+      [style*="fontSize: 28"] {
+        font-size: 24px !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+

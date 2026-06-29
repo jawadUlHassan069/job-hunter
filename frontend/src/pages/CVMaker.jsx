@@ -12,18 +12,37 @@ const authHeaders = () => ({
 });
 
 /* ─── Static tokens ──────────────────────────────────────────────────── */
-const BG   = "#080808";
-const SURF = "#0d0d0d";
-const BORDER = "rgba(255,255,255,0.06)";
-
 const FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap";
 
 const GLOBAL_CSS = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  /* Theme variables */
+  :root[data-theme="dark"], :root:not([data-theme]) {
+    --cv-bg: #080808;
+    --cv-surf: #0d0d0d;
+    --cv-border: rgba(255,255,255,0.06);
+    --cv-text: #fff;
+    --cv-text-muted: rgba(255,255,255,0.5);
+  }
+  
+  :root[data-theme="light"] {
+    --cv-bg: #f8f9fa;
+    --cv-surf: #ffffff;
+    --cv-border: rgba(0,0,0,0.08);
+    --cv-text: #1a1a1a;
+    --cv-text-muted: rgba(0,0,0,0.6);
+  }
+  
   html, body, #root { height: 100%; }
-  body { font-family: 'DM Mono', monospace; background: ${BG}; color: #fff;
-    -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  body { 
+    font-family: 'DM Mono', monospace; 
+    background: var(--cv-bg); 
+    color: var(--cv-text);
+    -webkit-font-smoothing: antialiased; 
+    overflow-x: hidden; 
+  }
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
   @keyframes fadeUp    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }

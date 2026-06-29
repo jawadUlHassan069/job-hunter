@@ -16,8 +16,8 @@ workers = 1
 # Worker class - sync is most memory efficient
 worker_class = 'sync'
 
-# Threads per worker - allows some concurrency without multiple processes
-threads = 2
+# NO THREADS - Even threads cause memory issues on 512MB tier
+# threads = 2  # Disabled to reduce memory usage
 
 # ── Timeout Configuration ─────────────────────────────────────
 # Increased timeout for CV processing, LLM calls, AND web scraping

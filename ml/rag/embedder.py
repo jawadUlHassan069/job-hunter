@@ -18,10 +18,13 @@ def get_local_embedder():
     """Lazy load the local SentenceTransformer model."""
     global _local_embedder
     if _local_embedder is None:
-        print("Loading local SentenceTransformer model...")
-        from sentence_transformers import SentenceTransformer
-        _local_embedder = SentenceTransformer('all-MiniLM-L6-v2')
-        print("Local model loaded successfully")
+        print("⚠️  Local SentenceTransformer model is not available on Render (removed to save RAM)")
+        print("   Please use remote embedding service: set USE_REMOTE_EMBEDDER=true")
+        raise RuntimeError(
+            "Local embedding model not available. "
+            "sentence-transformers package removed to reduce memory usage. "
+            "Use remote embedding service instead."
+        )
     return _local_embedder
 
 
@@ -82,20 +85,35 @@ try:
     test_file.unlink()
     print(f"✅ ChromaDB path is writable: {CHROMA_PATH}")
 except Exception as e:
-    print(f"❌ ChromaDB path NOT writable: {CHROMA_PATH}")
+    print(f"⚠️  WARNING: ChromaDB path NOT writable: {CHROMA_PATH}")
     print(f"   Error: {e}")
+    print(f"   ML matching may not work correctly")
 
-client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+# Initialize ChromaDB client with error handling
+try:
+    client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+    print(f"✅ ChromaDB client initialized successfully")
+except Exception as e:
+    print(f"❌ ERROR: ChromaDB client initialization failed: {e}")
+    print(f"   ML features will be unavailable")
+    # Don't crash - just log the error
+    client = None
 
 # cosine similarity — scores always positive 0 to 100%
-cv_collection  = client.get_or_create_collection(
-    'cvs',
-    metadata = {'hnsw:space': 'cosine'}
-)
-job_collection = client.get_or_create_collection(
-    'jobs',
-    metadata = {'hnsw:space': 'cosine'}
-)
+if client:
+    cv_collection  = client.get_or_create_collection(
+        'cvs',
+        metadata = {'hnsw:space': 'cosine'}
+    )
+    job_collection = client.get_or_create_collection(
+        'jobs',
+        metadata = {'hnsw:space': 'cosine'}
+    )
+    print(f"✅ ChromaDB collections initialized (CVs: {cv_collection.count()}, Jobs: {job_collection.count()})")
+else:
+    cv_collection = None
+    job_collection = None
+    print(f"⚠️  ChromaDB collections NOT initialized - ML matching disabled")
 
 
 def embed_cv(cv_id: int, cv_text: str, parsed: dict):
@@ -103,6 +121,10 @@ def embed_cv(cv_id: int, cv_text: str, parsed: dict):
     Convert CV text into a vector and store in ChromaDB.
     Called after every CV upload.
     """
+    if not cv_collection:
+        print(f"⚠️  ChromaDB not available - skipping CV {cv_id} embedding")
+        return
+    
     skills   = ' '.join(parsed.get('skills', []))
     combined = f"{cv_text[:2000]} Skills: {skills}"
     
@@ -128,6 +150,10 @@ def embed_job(job_id: int, title: str, description: str, skills: list):
     Convert job into a vector and store in ChromaDB.
     Called after every job is scraped or added.
     """
+    if not job_collection:
+        print(f"⚠️  ChromaDB not available - skipping Job {job_id} embedding")
+        return
+    
     skills_text = ' '.join(skills)
     combined    = f"{title}. {description[:2000]} Required: {skills_text}"
     
@@ -181,6 +207,10 @@ def get_similarity_scores(cv_id: int, top_k: int = 5) -> list:
     Same as find_matching_jobs but also returns similarity percentages.
     Used for testing and debugging.
     """
+    if not cv_collection or not job_collection:
+        print("❌ ChromaDB not available - cannot perform matching")
+        return []
+    
     result = cv_collection.get(
         ids     = [str(cv_id)],
         include = ['embeddings']

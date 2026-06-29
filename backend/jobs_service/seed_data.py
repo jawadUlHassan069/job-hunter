@@ -532,18 +532,21 @@ def load_mock_jobs():
             
             if created:
                 created_count += 1
-                # Try to embed the job
-                try:
-                    embed_job(obj.id)
+            
+            # ALWAYS try to embed - even if job already existed
+            # This ensures existing jobs from previous deployments get embedded
+            try:
+                result = embed_job(obj.id)
+                if result:  # embed_job returns True on success
                     embedded_count += 1
-                except Exception as e:
-                    print(f"Warning: Could not embed job {obj.id}: {e}")
-                    # Continue even if embedding fails
-                    pass
+            except Exception as e:
+                print(f"Warning: Could not embed job {obj.id}: {e}")
+                # Continue even if embedding fails
+                pass
                     
         except Exception as e:
             print(f"Error creating mock job: {e}")
             continue
     
-    print(f"✅ Mock data loaded: {created_count} jobs created, {embedded_count} embedded")
+    print(f"✅ Mock data loaded: {created_count} new jobs created, {embedded_count} embedded")
     return created_count

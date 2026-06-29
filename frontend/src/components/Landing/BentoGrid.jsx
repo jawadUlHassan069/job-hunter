@@ -88,8 +88,17 @@ export default function BentoGrid() {
   const sectionRef = useRef(null);
 
   useEffect(() => {
-    // Set initial opacity via JS so SSR/React doesn't flash invisible cards
+    // CRITICAL: Set fallback visibility immediately for mobile
     const cards = document.querySelectorAll(".bento-card");
+    const header = document.querySelector(".bento-header");
+    
+    // Timeout fallback in case GSAP doesn't fire (mobile issues)
+    const fallbackTimer = setTimeout(() => {
+      if (header) header.style.opacity = "1";
+      cards.forEach(c => { c.style.opacity = "1"; c.style.transform = "none"; });
+    }, 100);
+
+    // Set initial opacity via JS so SSR/React doesn't flash invisible cards
     cards.forEach(c => { c.style.opacity = "0"; c.style.transform = "translateY(20px)"; });
 
     const ctx = gsap.context(() => {
@@ -108,6 +117,7 @@ export default function BentoGrid() {
           clearProps: "opacity,transform",          /* critical — never leaves at opacity:0 */
           scrollTrigger: { trigger: ".bento-grid", start: "top 90%", once: true },
           onComplete: () => {
+            clearTimeout(fallbackTimer);
             /* Fallback — force visible if GSAP somehow didn't fire */
             cards.forEach(c => { c.style.opacity = "1"; c.style.transform = "none"; });
           },
@@ -115,7 +125,10 @@ export default function BentoGrid() {
       );
     }, sectionRef);
 
-    return () => ctx.revert();
+    return () => {
+      clearTimeout(fallbackTimer);
+      ctx.revert();
+    };
   }, []);
 
   return (

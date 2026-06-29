@@ -10,6 +10,14 @@ export default function TeamSection() {
   const sectionRef = useRef(null);
 
   useEffect(() => {
+    // CRITICAL: Fallback for mobile in case GSAP doesn't fire
+    const fallbackTimer = setTimeout(() => {
+      const header = document.querySelector(".team-header");
+      const cards = document.querySelectorAll(".team-card");
+      if (header) header.style.opacity = "1";
+      cards.forEach(c => { c.style.opacity = "1"; c.style.transform = "none"; });
+    }, 100);
+
     const ctx = gsap.context(() => {
       gsap.fromTo(".team-header",
         { opacity:0, y:20 },
@@ -19,10 +27,16 @@ export default function TeamSection() {
       gsap.fromTo(".team-card",
         { opacity:0, y:20 },
         { opacity:1, y:0, duration:0.5, stagger:0.07, ease:"power3.out", clearProps:"opacity,transform",
-          scrollTrigger:{ trigger:".team-grid", start:"top 88%", once:true } }
+          scrollTrigger:{ trigger:".team-grid", start:"top 88%", once:true },
+          onComplete: () => clearTimeout(fallbackTimer)
+        }
       );
     }, sectionRef);
-    return () => ctx.revert();
+    
+    return () => {
+      clearTimeout(fallbackTimer);
+      ctx.revert();
+    };
   }, []);
 
   return (

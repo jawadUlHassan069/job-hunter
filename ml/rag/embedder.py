@@ -60,9 +60,32 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
         embeddings = embedder.encode(texts)
         return [emb.tolist() for emb in embeddings]
 
-# absolute path — works from anywhere
-CHROMA_PATH = Path(__file__).resolve().parent / 'chroma_store'
-client      = chromadb.PersistentClient(path=str(CHROMA_PATH))
+# ChromaDB storage path
+# Use /tmp on cloud platforms (ephemeral but writable)
+# Use local path for development
+import os
+if os.environ.get('RENDER'):
+    # On Render, use /tmp which is writable but ephemeral
+    CHROMA_PATH = Path('/tmp/chroma_store')
+    print(f"🔧 Running on Render - using ephemeral storage: {CHROMA_PATH}")
+else:
+    # Local development - use persistent local storage
+    CHROMA_PATH = Path(__file__).resolve().parent / 'chroma_store'
+    print(f"🔧 Running locally - using persistent storage: {CHROMA_PATH}")
+
+# Ensure directory exists and is writable
+try:
+    CHROMA_PATH.mkdir(parents=True, exist_ok=True)
+    # Test write permissions
+    test_file = CHROMA_PATH / '.write_test'
+    test_file.touch()
+    test_file.unlink()
+    print(f"✅ ChromaDB path is writable: {CHROMA_PATH}")
+except Exception as e:
+    print(f"❌ ChromaDB path NOT writable: {CHROMA_PATH}")
+    print(f"   Error: {e}")
+
+client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
 # cosine similarity — scores always positive 0 to 100%
 cv_collection  = client.get_or_create_collection(
@@ -97,7 +120,7 @@ def embed_cv(cv_id: int, cv_text: str, parsed: dict):
             'name':   parsed.get('name', ''),
         }]
     )
-    print(f'CV {cv_id} embedded')
+    print(f'✅ CV {cv_id} embedded successfully (ChromaDB count: {cv_collection.count()})')
 
 
 def embed_job(job_id: int, title: str, description: str, skills: list):
@@ -122,7 +145,7 @@ def embed_job(job_id: int, title: str, description: str, skills: list):
             'skills': skills_text,
         }]
     )
-    print(f'Job {job_id} embedded')
+    print(f'✅ Job {job_id} embedded successfully (ChromaDB count: {job_collection.count()})')
 
 
 def find_matching_jobs(cv_id: int, top_k: int = 10) -> list:
@@ -164,15 +187,29 @@ def get_similarity_scores(cv_id: int, top_k: int = 5) -> list:
     )
 
     if not result['embeddings']:
+        print(f"❌ CV {cv_id} not found in ChromaDB")
         return []
 
     cv_vector = result['embeddings'][0]
+    
+    # Check if there are any jobs in ChromaDB
+    job_count = job_collection.count()
+    print(f"📊 ChromaDB stats: {job_count} jobs indexed")
+    
+    if job_count == 0:
+        print("⚠️  No jobs in ChromaDB - cannot perform matching")
+        return []
 
     matches = job_collection.query(
         query_embeddings = [cv_vector],
-        n_results        = min(top_k, job_collection.count()),
+        n_results        = min(top_k, job_count),
         include          = ['metadatas', 'distances']
     )
+
+    # Safety check: ensure we got results
+    if not matches['metadatas'] or not matches['metadatas'][0]:
+        print("⚠️  ChromaDB query returned no matches")
+        return []
 
     scores = []
     for meta, dist in zip(
@@ -187,5 +224,6 @@ def get_similarity_scores(cv_id: int, top_k: int = 5) -> list:
             'title':      meta['title'],
             'similarity': similarity,
         })
-
+    
+    print(f"✅ Found {len(scores)} matching jobs for CV {cv_id}")
     return scores

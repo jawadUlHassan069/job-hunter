@@ -12,6 +12,10 @@ const authHeaders = () => ({
 });
 
 /* ─── Static tokens ──────────────────────────────────────────────────── */
+const BG = "#080808"; // Keep for inline styles compatibility
+const SURF = "#0d0d0d";
+const BORDER = "rgba(255,255,255,0.06)";
+
 const FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap";
 
